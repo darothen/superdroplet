@@ -6,11 +6,16 @@
 import numpy as np
 cimport numpy as cnp
 
-from libc.stdlib cimport rand, RAND_MAX
-from libc.math cimport abs, sqrt
+from libc.stdlib cimport RAND_MAX
+# from libc.math cimport abs
 
 cdef extern from "math.h":
-    double floor(double x)
+    double floor(double x) nogil
+    double sqrt(double x) nogil
+    double fabs(double x) nogil
+
+cdef extern from "stdlib.h":
+    double rand() nogil
 
 cdef inline int ifloor(double x): return int(floor(x))
 cdef inline double dmin(double a, double b): return a if a <= b else b
@@ -97,7 +102,7 @@ cdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
     r_k = sd_k.rcubed**p
     tv_j = sd_j._terminal_v()
     tv_k = sd_k._terminal_v()
-    return E*PI*((r_j + r_k)**2)*abs(tv_j - tv_k)
+    return E*PI*((r_j + r_k)**2)*fabs(tv_j - tv_k)
 
 cdef list multi_coalesce(Superdroplet_t sd_j, Superdroplet_t sd_k, 
                          double gamma):
@@ -183,7 +188,8 @@ cpdef list recycle(list sds):
 
     return sds
 
-cpdef tuple step(list sd_list, double t_c, double delta_V):
+def step(Superdroplet_t[:] sd_list, 
+         double t_c, double delta_V):
     cdef list diag_msgs = []
 
     print "PREP STEPS"
@@ -214,7 +220,8 @@ cpdef tuple step(list sd_list, double t_c, double delta_V):
         double K_ij
 
     for i in xrange(n_part/2):
-        sd_j, sd_k = sd_list[i], sd_list[i + n_part/2]
+        sd_j = sd_list[i]
+        sd_k = sd_list[i + n_part/2]
 
         phi = rand() / RAND_FACT
         xi_j = sd_j.multi
