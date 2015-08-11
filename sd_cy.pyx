@@ -24,13 +24,11 @@ cdef double RAND_FACT = float(RAND_MAX)
 
 cdef int superdroplet_count
 
-ctypedef Superdroplet Superdroplet_t
 cdef class Superdroplet:
 
-    cdef public int multi
-    cdef public double rcubed, solute
-    cdef public double density
-    cdef public int id
+    cdef readonly int multi
+    cdef readonly double rcubed, solute, density
+    cdef readonly int id
 
     def __init__(self, int multi, double rcubed, double solute):
         global superdroplet_count
@@ -42,11 +40,11 @@ cdef class Superdroplet:
         self.density = RHO_WATER
         self.id = superdroplet_count
 
-    def get_terminal_v(self):
-        return self._get_terminal_v()
-    cdef double _get_terminal_v(self):        
+    property terminal_v:
+        def __get__(self):      
+            return self._terminal_v()
+    cdef double _terminal_v(self) nogil:
         cdef double diameter, g, C_D, t_v
-
         diameter = 2*self.rcubed**(1./3.)
         g   = 9.8 # gravitational acceleration, m/s
         C_D = 0.6 # drag coefficient, unitless
@@ -54,15 +52,18 @@ cdef class Superdroplet:
         tv  = sqrt(tv)
         return tv
 
-    def get_volume(self):
-        return self._get_volume()
-    cdef double _get_volume(self):
+    property volume:
+        def __get__(self):
+            return self._volume()
+    cdef double _volume(self) nogil:
         return self.rcubed*4.*PI/3.
 
-    def get_mass(self):
-        return self._get_mass()
-    cdef double _get_mass(self):
-        return self.density*self._get_volume()
+    property mass:
+        def __get__(self):
+            return self._mass()
+    cdef double _mass(self) nogil:
+        return self.density*self._volume()
+
 
     def attributes(self):
         return { 
@@ -77,31 +78,34 @@ cdef class Superdroplet:
     def __repr__(self):
         return "%d" % self.id
 
+ctypedef Superdroplet Superdroplet_t
+
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
 
 ## Collision Kernel
-cdef double golovin(Superdroplet sd_j, Superdroplet sd_k):
+cdef double golovin(Superdroplet_t sd_j, Superdroplet_t sd_k) nogil:
     cdef double b = 1.5e3
     cdef double rj3 = sd_j.rcubed, rk3 = sd_k.rcubed
     return b*(rj3 + rk3)*4.*PI/3.
 
-cdef double hydro(Superdroplet sd_j, Superdroplet sd_k):
+cdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
     cdef double E = 1.0
     cdef double p, r_j, r_k, tv_j, tv_k
     p = 1./3.
     r_j = sd_j.rcubed**p
     r_k = sd_k.rcubed**p
-    tv_j = sd_j.get_terminal_v()
-    tv_k = sd_k.get_terminal_v()
+    tv_j = sd_j._terminal_v()
+    tv_k = sd_k._terminal_v()
     return E*PI*((r_j + r_k)**2)*abs(tv_j - tv_k)
 
-cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
+cdef list multi_coalesce(Superdroplet_t sd_j, Superdroplet_t sd_k, 
+                         double gamma):
     """
     Coalesce two superdroplets with one another.
     """
 
-    cdef Superdroplet sd_temp, sd_recycle
+    cdef Superdroplet_t sd_temp, sd_recycle
     cdef double gamma_tilde
     cdef int multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
@@ -147,7 +151,7 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
 
         return [ sd_temp, sd_recycle ]
 
-def recycle(list sds):
+cpdef list recycle(list sds):
     """ For a list of superdroplets, identify which ones have 0 
     multiplicities; for each *i* of these, pick the superdroplet 
     with the *i*th-most multiplicity, split it in half, and copy 
@@ -156,6 +160,10 @@ def recycle(list sds):
     print "RECYCLE", 
 
     sds.sort(cmp=sd_compare)
+
+    cdef:
+        int i
+        Superdroplet_t sd, sd_donor
 
     for i, sd in enumerate(sds):
         # Short circuits:
@@ -175,7 +183,7 @@ def recycle(list sds):
 
     return sds
 
-def step(list sd_list, double t_c, double delta_V):
+cpdef tuple step(list sd_list, double t_c, double delta_V):
     cdef list diag_msgs = []
 
     print "PREP STEPS"
@@ -212,7 +220,7 @@ def step(list sd_list, double t_c, double delta_V):
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = golovin(sd_j, sd_k)
+        K_ij = hydro(sd_j, sd_k)
         if xi_j > xi_k:
             max_xi = xi_j
         else:
@@ -224,7 +232,7 @@ def step(list sd_list, double t_c, double delta_V):
 
         else:
             # print sd_j, sd_k, prob
-    
+            gamma = 1.0
             new_pair = multi_coalesce(sd_j, sd_k, gamma)
             output.extend(new_pair)
 
