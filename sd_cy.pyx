@@ -184,19 +184,8 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
             Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
         ]
     else:
-        # Split superdroplet if it goes above a critical multi
-        # threshold 
-        print sd_j.multi, sd_k.multi, gamma_tilde, excess
-        if multi_k_p < MULTI_THRESH:
-            print "SINGLE", multi_k_p
-            return [ Superdroplet(multi_k_p, rcubed_k_p, solute_k_p), ]
-        else:
-            print "SPLIT", multi_k_p
-            return [ Superdroplet(ifloor(multi_k_p/2), 
-                                  rcubed_k_p, solute_k_p),
-                     Superdroplet(ifloor(multi_k_p/2), 
-                                  rcubed_k_p, solute_k_p), ]
-
+        return [ Superdroplet(multi_k_p, rcubed_k_p, solute_k_p), ]
+        
 def step(list sd_list, double t_c, double delta_V):
     cdef list diag_msgs = []
 

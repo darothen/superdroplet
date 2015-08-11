@@ -373,6 +373,7 @@ def main():
     n_drops = len(sds)
     n_init = n_drops*1
     wms = [np.sum([s.get_mass() for s in sds])/1e3, ]
+    xi_s = [np.sum([s.multi for s in sds]), ]
     while t < t_end:
         t += t_c
         ti += 1
@@ -404,9 +405,13 @@ def main():
                 plt.figure(1)
                 plt.plot(xx, yy, label='crash')
                 plt.draw()
-            raise ValueError("Superdroplet number dropped too low")
+
+
+            print "Superdroplet number dropped too low"
+            break
 
         wms.append(np.sum([s.get_mass() for s in sds])/1e3)
+        xi_s.append(np.sum([s.multi for s in sds]))
         print "--"*40
 
     if DIAG_PLOTS:
@@ -417,6 +422,8 @@ def main():
         plt.draw()
 
         plt.show()
+
+    return wms, xi_s
 
 if __name__ == "__main__":
 
@@ -438,7 +445,7 @@ if __name__ == "__main__":
         c_step = partial(cython_step, t_c=t_c, delta_V=delta_V)
 
     ## DIAGNOSTICS
-    main()
+    out = main()
     # cProfile.run("main()", sort='time')
 
 
