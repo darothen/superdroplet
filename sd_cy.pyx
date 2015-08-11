@@ -9,8 +9,16 @@ cimport numpy as cnp
 from libc.stdlib cimport rand, RAND_MAX
 from libc.math cimport abs, sqrt
 
+from cpython.object cimport Py_LT, Py_LE, Py_EQ, Py_GE, Py_GT, Py_NE
+
 cdef extern from "math.h":
     double floor(double x)
+
+cdef extern from "stdlib.h":
+    void qsort(void *array, size_t count, size_t size,
+                int (*compare)(const void *, const void *))
+    void *malloc(size_t size) 
+    void free(void *ptr)
 
 cdef inline int ifloor(double x): return int(floor(x))
 cdef inline double dmin(double a, double b): return a if a <= b else b
@@ -39,6 +47,7 @@ cdef class Superdroplet:
         self.multi  = multi
         self.rcubed = rcubed
         self.solute = solute
+
         self.density = RHO_WATER
         self.id = superdroplet_count
 
@@ -77,6 +86,9 @@ cdef class Superdroplet:
     def __repr__(self):
         return "%d" % self.id
 
+cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
+    return a.multi - b.multi
+
 ## Collision Kernel
 cdef double golovin(Superdroplet sd_j, Superdroplet sd_k):
     cdef double b = 1.5e3
@@ -95,7 +107,7 @@ cdef double hydro(Superdroplet sd_j, Superdroplet sd_k):
 
 cpdef double detect_collision(Superdroplet_t sd_a, Superdroplet_t sd_b, 
                               double scaling, double t_c, double delta_V):
-    cdef double phi, p_alpha
+    cdef double phi, p_alpha, gamma
 
     #phi = c_libc_rand()
     #phi = np.random.uniform()
@@ -138,9 +150,9 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
     Coalesce two superdroplets with one another.
     """
 
-    cdef Superdroplet sd_temp, sd_split
-    cdef double gamma_tilde, excess
-    cdef int multi_j_p, multi_k_p
+    cdef Superdroplet sd_temp, sd_recycle
+    cdef double gamma_tilde
+    cdef int multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
 
     if sd_j.multi < sd_k.multi:
@@ -148,16 +160,16 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
         sd_j = sd_k.copy()
         sd_k = sd_temp
 
-    gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
+    # gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
+    gamma_tilde = 1.
     excess = sd_j.multi - int(gamma_tilde*sd_k.multi)
 
     # print "   ", gamma, gamma_tilde, excess
-    # print "   ", sd_j.multi, sd_k.multi
 
     if excess > 0:
 
-        multi_j_p = sd_j.multi - int(gamma_tilde*sd_k.multi)
-        multi_k_p = sd_k.multi
+        multi_j_p = excess # = sd_j.multi - int(gamma_tilde*sd_k.multi)
+        multi_k_p = int(gamma_tilde*sd_k.multi)
 
         rcubed_j_p = sd_j.rcubed
         rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
@@ -165,27 +177,52 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
         solute_j_p = sd_j.solute
         solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
 
+        return [
+            Superdroplet(multi_j_p, rcubed_j_p, solute_j_p),
+            Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
+        ]
+
     else:
 
-        multi_j_p = ifloor(sd_k.multi / 2.)
+        multi_j_p = ifloor(sd_k.multi/2)
         multi_k_p = sd_k.multi - multi_j_p
 
-        rcubed_j_p = rcubed_k_p = \
-            gamma_tilde*sd_j.rcubed + sd_k.rcubed
+        sd_temp = Superdroplet(multi_k_p, 
+                               gamma_tilde*sd_j.rcubed + sd_k.rcubed,
+                               gamma_tilde*sd_j.solute + sd_k.solute)
+        sd_recycle = Superdroplet(0, 
+                                  1., 1.)
 
-        solute_j_p = solute_k_p = \
-            gamma_tilde*sd_j.solute + sd_k.solute
+        return [ sd_temp, sd_recycle ]
 
-    ## Book-keeping
+def recycle(list sds):
+    """ For a list of superdroplets, identify which ones have 0 
+    multiplicities; for each *i* of these, pick the superdroplet 
+    with the *i*th-most multiplicity, split it in half, and copy 
+    the properties to the remaining superdroplet. """
 
-    if multi_j_p > 0:
-        return [
-            Superdroplet(multi_k_p, rcubed_k_p, solute_k_p),
-            Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
-        ]
-    else:
-        return [ Superdroplet(multi_k_p, rcubed_k_p, solute_k_p), ]
-        
+    print "RECYCLE", 
+
+    sds.sort(cmp=sd_compare)
+
+    for i, sd in enumerate(sds):
+        # Short circuits:
+        # 1) Did we already encounter non-zero superdroplets?
+        if sd.multi > 0: break
+
+        sd_donor = sds[-i]
+        # 2) Does the donor superdroplet have data to spare?
+        if sd_donor.multi <= 0: break
+
+        sd.multi = ifloor(sd_donor.multi/2)
+        sd_donor.multi -= ifloor(sd_donor.multi/2)
+
+        sd.rcubed = sd_donor.rcubed
+        sd.solute = sd_donor.solute
+    print " %d superdroplets" % i
+
+    return sds
+
 def step(list sd_list, double t_c, double delta_V):
     cdef list diag_msgs = []
 
@@ -219,10 +256,7 @@ def step(list sd_list, double t_c, double delta_V):
     for i in xrange(n_part/2):
         sd_j, sd_k = sd_list[i], sd_list[i + n_part/2]
 
-        # gamma = detect_collision(sd_a, sd_b, scaling, t_c, delta_V)
-        ## method: detect_collision()
         phi = rand() / RAND_FACT
-        ##     method: prob_collision()
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
@@ -231,18 +265,13 @@ def step(list sd_list, double t_c, double delta_V):
             max_xi = xi_j
         else:
             max_xi = xi_k
-        p_alpha = scaling*max_xi*(t_c/delta_V)*K_ij
-        ##     end method: prob_collision()
+        prob = scaling*max_xi*(t_c/delta_V)*K_ij
 
-        if phi < p_alpha - floor(p_alpha):
-            gamma = floor(p_alpha) + 1
+        if prob < phi: # no collision!
+            output.extend([sd_j, sd_k])
+
         else:
-            gamma = floor(p_alpha)
-        ## end method: detect_collision()
-
-        if abs(gamma) > 0:
-
-            # print sd_j, sd_k, gamma, p_alpha
+            # print sd_j, sd_k, prob
     
             new_pair = multi_coalesce(sd_j, sd_k, gamma)
             output.extend(new_pair)
@@ -250,9 +279,6 @@ def step(list sd_list, double t_c, double delta_V):
             if not collisions:
                 collisions = True
             counter += 1
-
-        else:
-            output.extend([sd_j, sd_k])
 
     if collisions:
         diag_msgs.append("%5d collisions simulated" % counter)
