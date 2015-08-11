@@ -69,7 +69,6 @@ cdef class Superdroplet:
     cdef double _mass(self) nogil:
         return self.density*self._volume()
 
-
     def attributes(self):
         return { 
             'multi': self.multi, 
@@ -188,9 +187,8 @@ cpdef list recycle(list sds):
 
     return sds
 
-def step(Superdroplet_t[:] sd_list, 
+def step(list sd_list, 
          double t_c, double delta_V):
-    cdef list diag_msgs = []
 
     print "PREP STEPS"
     # 1) Make the random permutation of the super-droplet list
@@ -247,8 +245,6 @@ def step(Superdroplet_t[:] sd_list,
                 collisions = True
             counter += 1
 
-    if collisions:
-        diag_msgs.append("%5d collisions simulated" % counter)
+    print "%5d collisions simulated" % counter
 
-    return output, diag_msgs
-
+    return output

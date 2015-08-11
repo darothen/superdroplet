@@ -150,19 +150,23 @@ if DIAG_PLOTS:
     plt.xlim(10, 5000)
     plt.ylim(0, 1.8)
 
+def to_sd_array(sds):
+    return np.asarray(sds, dtype=Superdroplet)
+
 def sort_sds(sds):
     cmpfun = attrgetter('multi')
-    sds.sort(key=cmpfun)
-    return sds
+    sds = sorted(sds, key=cmpfun)
+    return to_sd_array(sds)
 
-def main():
+def main(profile=False):
 
     print
     print "BEGINNING MAIN ROUTINE"
 
     # Generate list of Superdroplets
     sds = [Superdroplet(xi_i, r**3., 0.) for r in r_grid]
-    wm0 = np.sum([s.get_mass() for s in sds])/1e3
+    # sds = to_sd_array(sds)
+    wm0 = np.sum([s.mass for s in sds])/1e3
     sdss = [sort_sds(sds), ]
     print "Initial water mass = ", wm0
 
@@ -174,16 +178,24 @@ def main():
     t, ti = 0., 0
     n_drops = len(sds)
     n_init = n_drops*1
-    wms = [np.sum([s.get_mass() for s in sds])/1e3, ]
+    wms = [np.sum([s.mass for s in sds])/1e3, ]
     xi_s = [np.sum([s.multi for s in sds]), ]
+
+    if profile:
+        sds = c_step(sds)
+        # sds = recycle(sds)
+        # sds = to_sd_array(sds)
+        return sds
+
     while t < t_end:
         t += t_c
         ti += 1
 
         print "STEP %d (%5.1f s)" % (ti, t)
-        sds, msgs = c_step(sds)
 
-        sds = recycle(sds)
+        sds = c_step(sds)
+        # sds = recycle(sds)
+        # sds = to_sd_array(sds)
 
         print len(sds)
         if len(sds) < n_drops:
@@ -193,8 +205,6 @@ def main():
             print "   No change in superdrop number"
 
         print
-        for msg in msgs:
-            print "   %s" % msg
 
         if t % plot_dt == 0:
             if DIAG_PLOTS:
@@ -215,7 +225,7 @@ def main():
             print "Superdroplet number dropped too low"
             break
 
-        wms.append(np.sum([s.get_mass() for s in sds])/1e3)
+        wms.append(np.sum([s.mass for s in sds])/1e3)
         xi_s.append(np.sum([s.multi for s in sds]))
         sdss.append(sort_sds(sds))
         print "--"*40
@@ -234,6 +244,7 @@ def main():
 if __name__ == "__main__":
 
     DEBUG = False
+    PROFILE = False
 
     if DEBUG:
         from math import floor
@@ -243,15 +254,18 @@ if __name__ == "__main__":
 
         # Generate list of Superdroplets
         sds = [Superdroplet(xi_i, r**3., 0.) for r in r_grid]
-        wm0 = np.sum([s.get_mass() for s in sds])/1e3
+        wm0 = np.sum([s.mass for s in sds])/1e3
         print "Initial water mass = ", wm0
 
         results = []
         n_steps = int(t_end / t_c)
         c_step = partial(cython_step, t_c=t_c, delta_V=delta_V)
 
-    ## DIAGNOSTICS
-    out = main()
-    # cProfile.run("main()", sort='time')
+    elif PROFILE:
+        cProfile.run("main(profile=True)", sort='time')
+
+    else:
+        out = main()
+
 
 
