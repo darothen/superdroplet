@@ -9,16 +9,8 @@ cimport numpy as cnp
 from libc.stdlib cimport rand, RAND_MAX
 from libc.math cimport abs, sqrt
 
-from cpython.object cimport Py_LT, Py_LE, Py_EQ, Py_GE, Py_GT, Py_NE
-
 cdef extern from "math.h":
     double floor(double x)
-
-cdef extern from "stdlib.h":
-    void qsort(void *array, size_t count, size_t size,
-                int (*compare)(const void *, const void *))
-    void *malloc(size_t size) 
-    void free(void *ptr)
 
 cdef inline int ifloor(double x): return int(floor(x))
 cdef inline double dmin(double a, double b): return a if a <= b else b
@@ -47,7 +39,6 @@ cdef class Superdroplet:
         self.multi  = multi
         self.rcubed = rcubed
         self.solute = solute
-
         self.density = RHO_WATER
         self.id = superdroplet_count
 
@@ -105,46 +96,6 @@ cdef double hydro(Superdroplet sd_j, Superdroplet sd_k):
     tv_k = sd_k.get_terminal_v()
     return E*PI*((r_j + r_k)**2)*abs(tv_j - tv_k)
 
-cpdef double detect_collision(Superdroplet_t sd_a, Superdroplet_t sd_b, 
-                              double scaling, double t_c, double delta_V):
-    cdef double phi, p_alpha, gamma
-
-    #phi = c_libc_rand()
-    #phi = np.random.uniform()
-    phi = rand() / RAND_FACT
-    p_alpha = prob_collision(sd_a, sd_b, 
-                             scaling=scaling,t_c=t_c,delta_V=delta_V)
-    if phi < p_alpha - floor(p_alpha):
-        gamma = floor(p_alpha) + 1
-    else:
-        gamma = floor(p_alpha)
-
-    return gamma
-
-cdef double prob_collision(Superdroplet sd_j, Superdroplet sd_k, 
-                           double scaling, double t_c, double delta_V):
-    
-    cdef int xi_j, xi_k, max_xi
-    cdef double K_ij
-
-    xi_j = sd_j.multi
-    xi_k = sd_k.multi
-
-    K_ij = hydro(sd_j, sd_k)
-
-    #if kernel == 'golovin':
-    #    K_ij = golovin(sd_j, sd_k)
-    #elif kernel == 'hydro':
-    #    K_ij = hydro(sd_j, sd_k)
-    #else:
-    #    raise ValueError("Undefined collision kernel (%s)" % kernel)
-    if xi_j > xi_k:
-        max_xi = xi_j
-    else:
-        max_xi = xi_k
-
-    return scaling*max_xi*(t_c/delta_V)*K_ij
-
 cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
     """
     Coalesce two superdroplets with one another.
@@ -169,7 +120,7 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
     if excess > 0:
 
         multi_j_p = excess # = sd_j.multi - int(gamma_tilde*sd_k.multi)
-        multi_k_p = int(gamma_tilde*sd_k.multi)
+        multi_k_p = sd_k.multi
 
         rcubed_j_p = sd_j.rcubed
         rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
@@ -184,14 +135,15 @@ cdef list multi_coalesce(Superdroplet sd_j, Superdroplet sd_k, double gamma):
 
     else:
 
-        multi_j_p = ifloor(sd_k.multi/2)
+        multi_j_p = ifloor(sd_k.multi / 2.)
         multi_k_p = sd_k.multi - multi_j_p
 
         sd_temp = Superdroplet(multi_k_p, 
                                gamma_tilde*sd_j.rcubed + sd_k.rcubed,
                                gamma_tilde*sd_j.solute + sd_k.solute)
-        sd_recycle = Superdroplet(0, 
-                                  1., 1.)
+        sd_recycle = Superdroplet(multi_j_p, 
+                                  gamma_tilde*sd_j.rcubed + sd_k.rcubed,
+                                  gamma_tilde*sd_j.solute + sd_k.solute)
 
         return [ sd_temp, sd_recycle ]
 
@@ -260,7 +212,7 @@ def step(list sd_list, double t_c, double delta_V):
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = hydro(sd_j, sd_k)
+        K_ij = golovin(sd_j, sd_k)
         if xi_j > xi_k:
             max_xi = xi_j
         else:

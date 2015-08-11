@@ -28,11 +28,11 @@ def ifloor(x):
 ## Cell/experiment setup
 delta_V = 1.0  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds    
-t_end   = 1801
-plot_dt = 600
+t_end   = 3601
+plot_dt = 1200
 
 # Initial size distribution
-n_0     =  2.**23. # initial number density of droplets, m^-3
+n_0     = 2.**23. # initial number density of droplets, m^-3
 #n_0     = 3e8 #
 R_0     = 30.531e-6 # base drop radius, meters
 #R_0     = 9.3e-6
@@ -49,7 +49,7 @@ size_dist = lambda x: dist.pdf(x) # m^-3
 number_dens = lambda x: (n_0/RHO_WATER) * size_dist(x) # m^-6
 mass_dens = lambda x: (x*RHO_WATER)*(n_0/RHO_WATER)*size_dist(x) # is volume
 
-n_part = 2**11
+n_part = 2**13
 x_grid = np.sort( dist.rvs(size=n_part) ) # m^3
 r_grid = np.power( x_grid*3./np.pi/4., 1./3. ) # m
 m_grid = x_grid*RHO_WATER # kg
@@ -183,7 +183,7 @@ def main():
         print "STEP %d (%5.1f s)" % (ti, t)
         sds, msgs = c_step(sds)
 
-        # sds = recycle(sds)
+        sds = recycle(sds)
 
         print len(sds)
         if len(sds) < n_drops:
