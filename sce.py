@@ -49,7 +49,7 @@ size_dist = lambda x: dist.pdf(x) # m^-3
 number_dens = lambda x: (n_0/RHO_WATER) * size_dist(x) # m^-6
 mass_dens = lambda x: (x*RHO_WATER)*(n_0/RHO_WATER)*size_dist(x) # is volume
 
-n_part = 2**13
+n_part = 2**17
 x_grid = np.sort( dist.rvs(size=n_part) ) # m^3
 r_grid = np.power( x_grid*3./np.pi/4., 1./3. ) # m
 m_grid = x_grid*RHO_WATER # kg
@@ -151,7 +151,8 @@ if DIAG_PLOTS:
     plt.ylim(0, 1.8)
 
 def to_sd_array(sds):
-    return np.asarray(sds, dtype=Superdroplet)
+    return sds
+    # return np.asarray(sds, dtype=Superdroplet)
 
 def sort_sds(sds):
     cmpfun = attrgetter('multi')

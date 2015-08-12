@@ -122,13 +122,13 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     # gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
     gamma_tilde = 1.
-    excess = sd_j.multi - int(gamma_tilde*sd_k.multi)
+    excess = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
 
     # print "   ", gamma, gamma_tilde, excess
 
     if excess > 0:
 
-        multi_j_p = excess # = sd_j.multi - int(gamma_tilde*sd_k.multi)
+        multi_j_p = excess # = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
         multi_k_p = sd_k.multi
 
         rcubed_j_p = sd_j.rcubed
@@ -188,7 +188,7 @@ cpdef list recycle(list sds):
 
     return sds
 
-def step(Superdroplet_t[:] sd_list, 
+def step(list sd_list, 
          double t_c, double delta_V):
 
     print "PREP STEPS"
@@ -203,7 +203,6 @@ def step(Superdroplet_t[:] sd_list,
     # 3) Generate the uniform random numbers
     print "PROBABILITY LOOP"
     cdef double scaling = (n_part*(n_part - 1)/2.)/ifloor(n_part/2)    
-
 
     print "PROB / COLLISION LOOP"
     cdef bint collisions = False
