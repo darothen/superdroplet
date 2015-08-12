@@ -4,10 +4,12 @@
 #cython: wraparound=False
 
 import numpy as np
-cimport numpy as cnp
+cimport numpy as np
 
-from libc.stdlib cimport RAND_MAX
+from libc.stdlib cimport RAND_MAX, malloc, free
 # from libc.math cimport abs
+
+from cython.parallel cimport prange
 
 cdef extern from "math.h":
     double floor(double x) nogil
@@ -222,7 +224,14 @@ def step(Superdroplet_t[:] sd_list,
         int multi_j_p, multi_k_p, excess
         double rcubed_j_p, rcubed_k_p, solute_j_p, solute_k_p
 
+        np.ndarray new_sd_list = \
+            np.empty(len(sd_list), dtype=Superdroplet)
+
+    # for i in xrange(n_part):
+    #     sd_list[i] = sd_list[i]
+
     for i in xrange(n_part/2):
+    # for i in prange(n_part/2, nogil=True):
         sd_j = sd_list[i]
         sd_k = sd_list[i + n_part/2]
 
@@ -230,7 +239,7 @@ def step(Superdroplet_t[:] sd_list,
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = golovin(sd_j, sd_k)
+        K_ij = hydro(sd_j, sd_k)
         if xi_j > xi_k:
             max_xi = xi_j
         else:
@@ -238,50 +247,54 @@ def step(Superdroplet_t[:] sd_list,
         prob = scaling*max_xi*(t_c/delta_V)*K_ij
 
         if prob < phi: # no collision!
-            sd_list[i] = sd_j
-            sd_list[i + n_part/2] = sd_k
+            new_sd_list[i] = sd_j
+            new_sd_list[i + n_part/2] = sd_k
 
         else:
             # print sd_j, sd_k, prob
             gamma = 1.0
-            new_pair = multi_coalesce(sd_j, sd_k, gamma)
-            sd_j, sd_k = new_pair
+            # new_pair = multi_coalesce(sd_j, sd_k, gamma)
+            # sd_j, sd_k = new_pair
 
-            # MULTI_COALESCE LOGIC
-            # gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
-            # gamma_tilde = 1.
-            # excess = sd_j.multi - int(gamma_tilde*sd_k.multi)
+            # MULTI_COALESCE LOGIC    
+            if sd_j.multi < sd_k.multi:
+                sd_temp = sd_j
+                sd_j = sd_k
+                sd_k = sd_temp
+            gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
+            gamma_tilde = 1.
+            excess = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
 
-            # if excess > 0:
+            if excess > 0:
 
-            #     multi_j_p = excess # = sd_j.multi - int(gamma_tilde*sd_k.multi)
-            #     multi_k_p = sd_k.multi
+                multi_j_p = excess # = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
+                multi_k_p = sd_k.multi*1
 
-            #     rcubed_j_p = sd_j.rcubed
-            #     rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+                rcubed_j_p = sd_j.rcubed*1.
+                rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
 
-            #     solute_j_p = sd_j.solute
-            #     solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
+                solute_j_p = sd_j.solute*1.
+                solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
 
-            #     sd_j = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
-            #     sd_k = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
+                sd_j = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
+                sd_k = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
 
-            # else:
+            else:
 
-            #     multi_j_p = ifloor(sd_k.multi / 2.)
-            #     multi_k_p = sd_k.multi - multi_j_p
+                multi_j_p = ifloor(sd_k.multi / 2.)
+                multi_k_p = sd_k.multi - multi_j_p
 
-            #     rcubed_j_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
-            #     rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+                rcubed_j_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+                rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
 
-            #     solute_j_p = gamma_tilde*sd_j.solute + sd_k.solute
-            #     solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
+                solute_j_p = gamma_tilde*sd_j.solute + sd_k.solute
+                solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
 
-            #     sd_j = Superdroplet(multi_k_p, rcubed_j_p, solute_j_p)
-            #     sd_k = Superdroplet(multi_j_p, rcubed_k_p, solute_k_p)
+                sd_j = Superdroplet(multi_k_p, rcubed_j_p, solute_j_p)
+                sd_k = Superdroplet(multi_j_p, rcubed_k_p, solute_k_p)
 
-            sd_list[i] = sd_j
-            sd_list[i + n_part/2] = sd_k
+            new_sd_list[i] = sd_j
+            new_sd_list[i + n_part/2] = sd_k
 
             if not collisions:
                 collisions = True
@@ -289,4 +302,4 @@ def step(Superdroplet_t[:] sd_list,
 
     print "%5d collisions simulated" % counter
 
-    return sd_list
+    return new_sd_list

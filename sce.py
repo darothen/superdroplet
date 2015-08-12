@@ -28,8 +28,8 @@ def ifloor(x):
 ## Cell/experiment setup
 delta_V = 1.0  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds    
-t_end   = 3601
-plot_dt = 1200
+t_end   = 1801
+plot_dt = 300
 
 # Initial size distribution
 n_0     = 2.**23. # initial number density of droplets, m^-3
@@ -151,6 +151,7 @@ if DIAG_PLOTS:
     plt.ylim(0, 1.8)
 
 def to_sd_array(sds):
+    # return sds
     return np.asarray(sds, dtype=Superdroplet)
 
 def sort_sds(sds):
@@ -165,7 +166,7 @@ def main(profile=False):
 
     # Generate list of Superdroplets
     sds = [Superdroplet(xi_i, r**3., 0.) for r in r_grid]
-    # sds = to_sd_array(sds)
+    sds = to_sd_array(sds)
     wm0 = np.sum([s.mass for s in sds])/1e3
     sdss = [sort_sds(sds), ]
     print "Initial water mass = ", wm0
@@ -184,7 +185,7 @@ def main(profile=False):
     if profile:
         sds = c_step(sds)
         # sds = recycle(sds)
-        # sds = to_sd_array(sds)
+        sds = to_sd_array(sds)
         return sds
 
     while t < t_end:
@@ -195,7 +196,7 @@ def main(profile=False):
 
         sds = c_step(sds)
         # sds = recycle(sds)
-        # sds = to_sd_array(sds)
+        sds = to_sd_array(sds)
 
         print len(sds)
         if len(sds) < n_drops:
