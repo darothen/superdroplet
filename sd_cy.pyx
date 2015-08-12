@@ -103,7 +103,8 @@ cdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
     tv_k = sd_k._terminal_v()
     return E*PI*((r_j + r_k)**2)*fabs(tv_j - tv_k)
 
-cdef list multi_coalesce(Superdroplet_t sd_j, Superdroplet_t sd_k, 
+cdef list multi_coalesce(Superdroplet_t sd_j, 
+                         Superdroplet_t sd_k, 
                          double gamma):
     """
     Coalesce two superdroplets with one another.
@@ -187,7 +188,7 @@ cpdef list recycle(list sds):
 
     return sds
 
-def step(list sd_list, 
+def step(Superdroplet_t[:] sd_list, 
          double t_c, double delta_V):
 
     print "PREP STEPS"
@@ -205,17 +206,21 @@ def step(list sd_list,
 
 
     print "PROB / COLLISION LOOP"
-    cdef list output = []
     cdef bint collisions = False
     cdef int counter = 0
     cdef:
         unsigned int i
         Superdroplet_t sd_j, sd_k
         double gamma
+        # Superdroplet_t[:] new_pair
         list new_pair
         double phi, p_alpha
         int xi_j, xi_k, max_xi
         double K_ij
+
+        double gamma_tilde
+        int multi_j_p, multi_k_p, excess
+        double rcubed_j_p, rcubed_k_p, solute_j_p, solute_k_p
 
     for i in xrange(n_part/2):
         sd_j = sd_list[i]
@@ -225,7 +230,7 @@ def step(list sd_list,
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = hydro(sd_j, sd_k)
+        K_ij = golovin(sd_j, sd_k)
         if xi_j > xi_k:
             max_xi = xi_j
         else:
@@ -233,13 +238,50 @@ def step(list sd_list,
         prob = scaling*max_xi*(t_c/delta_V)*K_ij
 
         if prob < phi: # no collision!
-            output.extend([sd_j, sd_k])
+            sd_list[i] = sd_j
+            sd_list[i + n_part/2] = sd_k
 
         else:
             # print sd_j, sd_k, prob
             gamma = 1.0
             new_pair = multi_coalesce(sd_j, sd_k, gamma)
-            output.extend(new_pair)
+            sd_j, sd_k = new_pair
+
+            # MULTI_COALESCE LOGIC
+            # gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
+            # gamma_tilde = 1.
+            # excess = sd_j.multi - int(gamma_tilde*sd_k.multi)
+
+            # if excess > 0:
+
+            #     multi_j_p = excess # = sd_j.multi - int(gamma_tilde*sd_k.multi)
+            #     multi_k_p = sd_k.multi
+
+            #     rcubed_j_p = sd_j.rcubed
+            #     rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+
+            #     solute_j_p = sd_j.solute
+            #     solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
+
+            #     sd_j = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
+            #     sd_k = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
+
+            # else:
+
+            #     multi_j_p = ifloor(sd_k.multi / 2.)
+            #     multi_k_p = sd_k.multi - multi_j_p
+
+            #     rcubed_j_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+            #     rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+
+            #     solute_j_p = gamma_tilde*sd_j.solute + sd_k.solute
+            #     solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
+
+            #     sd_j = Superdroplet(multi_k_p, rcubed_j_p, solute_j_p)
+            #     sd_k = Superdroplet(multi_j_p, rcubed_k_p, solute_k_p)
+
+            sd_list[i] = sd_j
+            sd_list[i + n_part/2] = sd_k
 
             if not collisions:
                 collisions = True
@@ -247,4 +289,4 @@ def step(list sd_list,
 
     print "%5d collisions simulated" % counter
 
-    return output
+    return sd_list
