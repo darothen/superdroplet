@@ -20,16 +20,19 @@ import pstats, cProfile
 
 RHO_WATER = 1e3 # kg/m^3
 
-DIAG_PLOTS = True
+DIAG_PLOTS = True    
+DEBUG = False
+PROFILE = False 
 
 def ifloor(x):
     return int(np.floor(x))
 
 ## Cell/experiment setup
-delta_V = 1.0  # Cell volume, m^3
+delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds    
-t_end   = 3601
-plot_dt = 1200
+t_end   = 1800
+plot_dt = 600
+out_dt  = plot_dt/2
 
 # Initial size distribution
 n_0     = 2.**23. # initial number density of droplets, m^-3
@@ -49,7 +52,7 @@ size_dist = lambda x: dist.pdf(x) # m^-3
 number_dens = lambda x: (n_0/RHO_WATER) * size_dist(x) # m^-6
 mass_dens = lambda x: (x*RHO_WATER)*(n_0/RHO_WATER)*size_dist(x) # is volume
 
-n_part = 2**17
+n_part = 2**13
 x_grid = np.sort( dist.rvs(size=n_part) ) # m^3
 r_grid = np.power( x_grid*3./np.pi/4., 1./3. ) # m
 m_grid = x_grid*RHO_WATER # kg
@@ -166,7 +169,7 @@ def main(profile=False):
 
     # Generate list of Superdroplets
     sds = [Superdroplet(xi_i, r**3., 0.) for r in r_grid]
-    # sds = to_sd_array(sds)
+    sds = to_sd_array(sds)
     wm0 = np.sum([s.mass for s in sds])/1e3
     sdss = [sort_sds(sds), ]
     print "Initial water mass = ", wm0
@@ -182,15 +185,12 @@ def main(profile=False):
     wms = [np.sum([s.mass for s in sds])/1e3, ]
     xi_s = [np.sum([s.multi for s in sds]), ]
 
-    if profile:
-        sds = c_step(sds)
-        # sds = recycle(sds)
-        # sds = to_sd_array(sds)
-        return sds
-
     while t < t_end:
         t += t_c
         ti += 1
+
+        if profile and ti > 10:
+            break
 
         print "STEP %d (%5.1f s)" % (ti, t)
 
@@ -226,9 +226,10 @@ def main(profile=False):
             print "Superdroplet number dropped too low"
             break
 
-        wms.append(np.sum([s.mass for s in sds])/1e3)
-        xi_s.append(np.sum([s.multi for s in sds]))
-        sdss.append(sort_sds(sds))
+        if t % out_dt == 0:
+            wms.append(np.sum([s.mass for s in sds])/1e3)
+            xi_s.append(np.sum([s.multi for s in sds]))
+            sdss.append(sort_sds(sds))
         print "--"*40
 
     if DIAG_PLOTS:
@@ -243,9 +244,6 @@ def main(profile=False):
     return wms, xi_s, sdss
 
 if __name__ == "__main__":
-
-    DEBUG = False
-    PROFILE = False
 
     if DEBUG:
         from math import floor
@@ -266,7 +264,7 @@ if __name__ == "__main__":
         cProfile.run("main(profile=True)", sort='time')
 
     else:
-        out = main()
+        out = main(profile=PROFILE)
 
 
 

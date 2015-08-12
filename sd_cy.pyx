@@ -7,16 +7,16 @@ import numpy as np
 cimport numpy as cnp
 
 from libc.stdlib cimport RAND_MAX
-# from libc.math cimport abs
 
-cdef extern from "math.h":
-    double floor(double x) nogil
-    double sqrt(double x) nogil
-    double fabs(double x) nogil
+cdef extern from "math.h" nogil:
+    double floor(double x)
+    double sqrt(double x)
+    double fabs(double x)
 
-cdef extern from "stdlib.h":
-    double rand() nogil
+cdef extern from "stdlib.h" nogil:
+    double rand()
 
+## Inline alias functions
 cdef inline int ifloor(double x): return int(floor(x))
 cdef inline double dmin(double a, double b): return a if a <= b else b
 
@@ -229,7 +229,7 @@ def step(list sd_list,
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = golovin(sd_j, sd_k)
+        K_ij = hydro(sd_j, sd_k)
         if xi_j > xi_k:
             max_xi = xi_j
         else:
