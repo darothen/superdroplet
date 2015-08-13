@@ -27,7 +27,7 @@ cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline int imax(int a, int b): return a if a >= b else b
 
-DEF KERNEL_ID = 1 # 1 = Golovin, 
+DEF KERNEL_ID = 3 # 1 = Golovin, 
                   # 2 = Hydro w/ E_coll=1
                   # 3 = Hydro w/ Long collection
 DEF VERBOSITY = 1
@@ -125,15 +125,19 @@ cpdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k):
 
     elif KERNEL_ID == 3:
         ## Long (1974) collision kernel
-        r_small = dmin(r_j, r_k)
-        r_large = dmax(r_j, r_k)
+        r_small = dmin(r_j, r_k)*1e6 # convert to micron
+        r_large = dmax(r_j, r_k)*1e6
 
-        if r_large >= 50e-6: # microns
+        if r_large >= 50.0: # microns
             E_coll = 1.0
         else:
-            E_coll = dmax(4.5e4 * (r_large*r_large*1e4) * \
-                          (1. - 3e-4/(r_small*1e2)),
-                          1e-3 )
+            ## Simmel et al, 2002 # REMOVE MICRON CONVERSION! 
+            # E_coll = dmax(4.5e4 * (r_large*r_large*1e4) * \
+            #               (1. - 3e-4/(r_small*1e2)),
+            #               1e-3 )
+            ## Bott code
+            E_coll = 4.5e-4*(r_large*r_large)* \
+                     (1.0 - 3.0/(dmax(3., r_small) + 1e-2))
         E_coal = 1.0
 
     else: 
