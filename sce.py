@@ -20,9 +20,12 @@ import pstats, cProfile
 
 RHO_WATER = 1e3 # kg/m^3
 
-DIAG_PLOTS = True    
+DIAG_PLOTS = False    
 DEBUG = False
-PROFILE = False 
+PROFILE = True
+
+# Don't do diag plots and profile simultaneously 
+if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
 
 def ifloor(x):
     return int(np.floor(x))
@@ -141,11 +144,11 @@ def kde_plot(sds_list=None, r_grid=None, xi=None):
 
     return xx, yy
 
-print
-print "SMOOTHING PARTICLES"
-xx, yy = kde_plot(r_grid=r_grid, xi=xi_i)
-
 if DIAG_PLOTS:
+    print
+    print "SMOOTHING PARTICLES"
+    xx, yy = kde_plot(r_grid=r_grid, xi=xi_i)
+
     fig = plt.figure(1)
     plt.clf()
     plt.plot(xx, yy, '-k', lw=2, label='original')
