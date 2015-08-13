@@ -27,6 +27,9 @@ cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline int imax(int a, int b): return a if a >= b else b
 
+DEF KERNEL_ID = 3 # 1 = Golovin, 
+                  # 2 = Hydro w/ E_coll=1
+                  # 3 = Hydro w/ Long collection
 DEF VERBOSITY = 1
 DEF RHO_WATER = 1e3
 DEF RHO_AIR = 1.0
@@ -95,17 +98,16 @@ ctypedef Superdroplet Superdroplet_t
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
 
-## Collision Kernels
-cpdef double golovin(Superdroplet_t sd_j, Superdroplet_t sd_k):
-    cdef double b = 1.5e3
-    cdef double rj3 = sd_j.rcubed, rk3 = sd_k.rcubed
-    return b*(rj3 + rk3)*4.*PI/3.
-
-cpdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
+cpdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k):
+    cdef double b = 1.5e3 # constant for Golovin
     cdef double E_coll, E_coal = 1.0
-    cdef double p, r_j, r_k, tv_j, tv_k
+    cdef double p, r_j, r_k, 
+    cdef double tv_j, tv_k
     cdef double r_small, r_large
     cdef double tv_diff, r_sum
+
+    if KERNEL_ID == 1:
+        return b*(sd_j.rcubed + sd_k.r_cubed)*4.*PI/3.
 
     p = 1./3.
     r_j = sd_j.rcubed**p
@@ -117,19 +119,30 @@ cpdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
     tv_diff = tv_j - tv_k
     r_sum = r_j + r_k
 
-    ## Long (1974) collision kernel
-    r_small = dmin(r_j, r_k)
-    r_large = dmax(r_j, r_k)
-
-    if r_large >= 50e-6: # microns
+    if KERNEL_ID == 2:
         E_coll = 1.0
-    else:
-        E_coll = dmax(4.5e4 * (r_large*r_large*1e4) * \
-                      (1. - 3e-4/(r_small*1e2)),
-                      1e-3 )
+        E_coal = 1.0
 
-    # Limit collection efficiency to <= 1.0
+    elif KERNEL_ID == 3:
+        ## Long (1974) collision kernel
+        r_small = dmin(r_j, r_k)
+        r_large = dmax(r_j, r_k)
+
+        if r_large >= 50e-6: # microns
+            E_coll = 1.0
+        else:
+            E_coll = dmax(4.5e4 * (r_large*r_large*1e4) * \
+                          (1. - 3e-4/(r_small*1e2)),
+                          1e-3 )
+        E_coal = 1.0
+
+    else: 
+        E_coll = 1.0
+        E_coal = 1.0
+
+    # Limit collection efficiency to 0 <= E_coll <= 1.0
     E_coll = dmin(E_coll, 1.0)
+    E_coll = dmax(0.0, E_coll)
 
     return (E_coll*E_coal)*PI*(r_sum*r_sum)*fabs(tv_diff)
 
@@ -271,7 +284,7 @@ def step(list sd_list,
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = hydro(sd_j, sd_k)
+        K_ij = kernel(sd_j, sd_k)
         max_xi = imax(xi_j, xi_k)
         prob = scaling*max_xi*(t_c/delta_V)*K_ij
 
