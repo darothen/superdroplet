@@ -13,6 +13,8 @@ cimport numpy as cnp
 
 from libc.stdlib cimport RAND_MAX
 
+from hall cimport hall_effic
+
 cdef extern from "math.h" nogil:
     double floor(double x)
     double sqrt(double x)
@@ -27,9 +29,10 @@ cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline int imax(int a, int b): return a if a >= b else b
 
-DEF KERNEL_ID = 3 # 1 = Golovin, 
+DEF KERNEL_ID = 4 # 1 = Golovin, 
                   # 2 = Hydro w/ E_coll=1
                   # 3 = Hydro w/ Long collection
+                  # 4 = Hydro w/ Hall efficiencies (from Bott)
 DEF VERBOSITY = 1
 DEF RHO_WATER = 1e3
 DEF RHO_AIR = 1.0
@@ -138,6 +141,15 @@ cpdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k):
             ## Bott code
             E_coll = 4.5e-4*(r_large*r_large)* \
                      (1.0 - 3.0/(dmax(3., r_small) + 1e-2))
+        E_coal = 1.0
+
+    elif KERNEL_ID == 4:
+        # Hall (1980) collection kernel as collatd by Bott (1998)
+        r_small = dmin(r_j, r_k)*1e6 # convert to micron
+        r_large = dmax(r_j, r_k)*1e6
+
+        E_coll = hall_effic(r_large, r_small)
+        # print r_large, r_small / r_large, E_coll
         E_coal = 1.0
 
     else: 

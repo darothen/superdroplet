@@ -41,11 +41,21 @@ def ifloor(x):
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
 n_part  = 2**15 # number of superdroplets to use in simulation
-casename = "shima_golo"   
+casename = "shima_hydro1"   
 
 settings = get_case(casename)
 t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
 out_dt  = plot_dt/2
+
+## MANUALLY CHANGE CASE
+t_end, plot_dt = 1801, 600
+f = 1.0
+n_0 = (f**3)*2**28
+R_0 = 10.e-6/f
+X_0 = (4.*np.pi/3.)*(R_0**3)
+M_0 = X_0*RHO_WATER
+m_tot_ana = 1.0
+delta_V /= 100.
 
 print """
 CASE - {casename:s}
@@ -104,7 +114,7 @@ total_xi = xi_i*n_part # unitless
 N_per_SD = total_droplets / total_xi
 print " N per SD_xi: ", N_per_SD
 
-Rs = np.logspace(0., np.log10(5e4), 250)
+Rs = np.logspace(0., np.log10(5e3), 250)
 
 @jit("f8[:](f8[:],f8[:],f8[:],f8)")
 def gtilde_jit(R, r_grid, xi, sigma):
