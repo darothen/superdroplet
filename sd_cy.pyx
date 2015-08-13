@@ -129,18 +129,17 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
     cdef int multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
 
-
-
     if sd_j.multi < sd_k.multi:
         sd_temp = sd_j.copy()
         sd_j = sd_k.copy()
         sd_k = sd_temp
 
-    # gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
+    gamma_tilde = dmin(gamma, ifloor(sd_j.multi/sd_k.multi))
+    # print gamma, ifloor(sd_j.multi / sd_k.multi)
     gamma_tilde = 1.
     excess = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
 
-    # print "   ", gamma, gamma_tilde, excess
+    # print gamma, gamma_tilde, sd_j.multi, sd_k.multi, excess
 
     if excess > 0:
 
@@ -156,10 +155,17 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         sd_temp = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
         sd_recycle = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
 
-    else:
+    else: # implies excess == 0
+
+        # print "NO EXCESS", sd_j.multi, sd_k.multi
 
         multi_j_p = ifloor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
+
+        # if multi_j_p == 0:
+        #     print "WHAT J"
+        # if multi_j_p == 0:
+        #     print "WHAT K"
 
         sd_temp = Superdroplet(multi_k_p, 
                                gamma_tilde*sd_j.rcubed + sd_k.rcubed,

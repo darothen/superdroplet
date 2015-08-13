@@ -44,9 +44,7 @@ out_dt  = plot_dt/2
 
 # Initial size distribution
 n_0     = 2.**23. # initial number density of droplets, m^-3
-#n_0     = 3e8 #
 R_0     = 30.531e-6 # base drop radius, meters
-#R_0     = 9.3e-6
 X_0     = (4.*np.pi/3.)*(R_0**3.) # base drop volume, m^3
 M_0     = X_0*RHO_WATER
 
@@ -97,7 +95,7 @@ total_xi = xi_i*n_part # unitless
 N_per_SD = total_droplets / total_xi
 print " N per SD_xi: ", N_per_SD
 
-Rs = np.logspace(0., np.log10(5e3), 250)
+Rs = np.logspace(0., np.log10(5e4), 250)
 
 @jit("f8[:](f8[:],f8[:],f8[:],f8)")
 def gtilde_jit(R, r_grid, xi, sigma):
