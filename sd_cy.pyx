@@ -158,7 +158,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     else:
 
-        multi_j_p = ifloor(sd_k.multi / 2.)
+        multi_j_p = ifloor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
 
         sd_temp = Superdroplet(multi_k_p, 
