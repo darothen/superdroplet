@@ -24,6 +24,7 @@ cdef extern from "stdlib.h" nogil:
 ## Inline alias functions
 cdef inline int ifloor(double x): return int(floor(x))
 cdef inline double dmin(double a, double b): return a if a <= b else b
+cdef inline int imax(int a, int b): return a if a >= b else b
 
 DEF VERBOSITY = 1
 DEF RHO_WATER = 1e3
@@ -211,7 +212,7 @@ def step(list sd_list,
 
     # 2) Make the candidate pairs
     print "   GEN PAIRS"
-    cdef int n_part = len(sd_list)
+    cdef long n_part = <long> len(sd_list)
 
     # 3) Generate the uniform random numbers
     print "PROBABILITY LOOP"
@@ -236,6 +237,8 @@ def step(list sd_list,
 
         cdef double b = 1.5e3, rj3, rk3
 
+        cdef double max_prob = 0.0, min_prob = 1.0
+
     for i in xrange(n_part/2):
         sd_j = sd_list[i]
         sd_k = sd_list[i + n_part/2]
@@ -244,12 +247,12 @@ def step(list sd_list,
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = golovin(sd_j, sd_k)
-        if xi_j > xi_k:
-            max_xi = xi_j
-        else:
-            max_xi = xi_k
+        K_ij = hydro(sd_j, sd_k)
+        max_xi = imax(xi_j, xi_k)
         prob = scaling*max_xi*(t_c/delta_V)*K_ij
+
+        if prob > max_prob: max_prob = prob
+        if prob < min_prob: min_prob = prob
 
         if prob < phi: # no collision!
             sd_list[i] = sd_j
@@ -269,5 +272,6 @@ def step(list sd_list,
             counter += 1
 
     print "%5d collisions simulated" % counter
+    print " Max/min probabilities: ", min_prob, max_prob
 
     return sd_list

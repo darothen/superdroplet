@@ -27,6 +27,7 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 - Is there a faster way to do np.random.shuffle?
 
 - For some reason, collisions aren't simulated when there are 2**17 superdroplets. The most I can have and still get it to work is 2**15 + (2**15 / 4)
+    + **SOLVED**: issue was an integer buffer overflow with the variable `n_part` in the Cython file. Computing `n_part*(n_part - 1)` overflowed and reset it to 0 when `n_part` was sufficiently large. To fix this, I cast the length-inspection operation to a *long and forced `scaling` to be a *double*.
 
 - Increasing delta_V to 1e6 m^3 (like in the Shima et al paper) works fine for Golovin's kernel. Works for the hydrodynamic kernel, too, but the distribution doesn't seem to narrow and grow as much as I'd expect it to.
 
