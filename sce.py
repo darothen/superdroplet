@@ -17,6 +17,8 @@ if PYXIMPORT:
 from sd_cy import *
 from sd_cy import step as cython_step, recycle
 
+from cases import get_case
+
 from numba import jit
 from functools import partial
 from operator import attrgetter
@@ -37,18 +39,25 @@ def ifloor(x):
 
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
-t_c     = 1.0  # timestep, seconds    
-t_end   = 1801
-plot_dt = 600
+t_c     = 1.0  # timestep, seconds 
+casename = "shima_hydro1"   
+
+settings = get_case(casename)
+t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
 out_dt  = plot_dt/2
 
-# Initial size distribution
-n_0     = 2.**23. # initial number density of droplets, m^-3
-R_0     = 30.531e-6 # base drop radius, meters
-X_0     = (4.*np.pi/3.)*(R_0**3.) # base drop volume, m^3
-M_0     = X_0*RHO_WATER
+print """
+CASE - {casename:s}
+      t_end = {t_end:d} seconds
+    plot_dt = {plot_dt:d} seconds
 
-m_tot_ana = 1.0 # g m^-3
+INITIAL DISTRIBUTION
+    n_0 = {n_0:3.1e} m^-3
+    R_0 = {R_0:3.2e} m
+    X_0 = {X_0:2.1e} m^3
+    M_0 = {M_0:2.1e} kg
+      m = {m_tot_ana:2.2f} g m^-3
+""".format(casename=casename, **settings.__dict__)
 
 def mom_dist(x, l=0., x0=X_0):
     return (x**l)*(n_0/x0)*np.exp(-x/x0)
@@ -58,7 +67,7 @@ size_dist = lambda x: dist.pdf(x) # m^-3
 number_dens = lambda x: (n_0/RHO_WATER) * size_dist(x) # m^-6
 mass_dens = lambda x: (x*RHO_WATER)*(n_0/RHO_WATER)*size_dist(x) # is volume
 
-n_part = 2**13
+n_part = 2**15
 x_grid = np.sort( dist.rvs(size=n_part) ) # m^3
 r_grid = np.power( x_grid*3./np.pi/4., 1./3. ) # m
 m_grid = x_grid*RHO_WATER # kg
