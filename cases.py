@@ -15,7 +15,7 @@ case = namedtuple("case", ['t_end', 'plot_dt', # seconds
 def get_case(name):
     """ Default settings for initial exponential drop distributions """
 
-    if name == "shima_golovin":
+    if name == "shima_golo":
         t_end, plot_dt = 3601, 1200
         n_0 = 2.**23.
         R_0 = 30.531e-6

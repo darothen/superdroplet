@@ -27,7 +27,7 @@ cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline int imax(int a, int b): return a if a >= b else b
 
-DEF KERNEL_ID = 3 # 1 = Golovin, 
+DEF KERNEL_ID = 1 # 1 = Golovin, 
                   # 2 = Hydro w/ E_coll=1
                   # 3 = Hydro w/ Long collection
 DEF VERBOSITY = 1
@@ -163,13 +163,8 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         sd_j = sd_k.copy()
         sd_k = sd_temp
 
-    ## TODO: unlimit gamma_tilde
     gamma_tilde = dmin(gamma, ifloor(sd_j.multi/sd_k.multi))
-    # print gamma, ifloor(sd_j.multi / sd_k.multi)
-    # gamma_tilde = 1.
     excess = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
-
-    # print gamma, gamma_tilde, sd_j.multi, sd_k.multi, excess
 
     if excess > 0:
 
@@ -292,14 +287,13 @@ def step(list sd_list,
         if prob < min_prob: min_prob = prob
         if prob > 1: big_probs += 1
 
-        if prob < phi: # no collision!
+        # Limit the probability when comparing to the uni draw
+        if (prob - floor(prob)) < phi: # no collision!
             sd_list[i] = sd_j
             sd_list[i + n_part/2] = sd_k
 
         else:
-            # print sd_j, sd_k, prob
-            # gamma = 1.0
-            gamma = floor(prob - floor(prob)) + 1.
+            gamma = floor(prob) + 1
             new_pair = multi_coalesce(sd_j, sd_k, gamma)
             sd_j, sd_k = new_pair
 
