@@ -25,10 +25,14 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 - The slowest part of the algorithm is consistently in Python realm, when we iterate through a list of Superdroplets and compute properties. Very clearly, this should be deferred to a Cython method - potentially even a Cython datastructure which contains a list of Superdroplets ("Superpopulation") and provides easy access to ensemble-level properties.
 
 - Is there a faster way to do np.random.shuffle?
-
+    + probably not necessary, since that's not the leading-order bottleneck each step.
+     
 - For some reason, collisions aren't simulated when there are 2**17 superdroplets. The most I can have and still get it to work is 2**15 + (2**15 / 4)
     + **SOLVED**: issue was an integer buffer overflow with the variable `n_part` in the Cython file. Computing `n_part*(n_part - 1)` overflowed and reset it to 0 when `n_part` was sufficiently large. To fix this, I cast the length-inspection operation to a *long and forced `scaling` to be a *double*.
 
-- Increasing delta_V to 1e6 m^3 (like in the Shima et al paper) works fine for Golovin's kernel. Works for the hydrodynamic kernel, too, but the distribution doesn't seem to narrow and grow as much as I'd expect it to.
-
 - **hydro** and **golovin** are all elemental operations, but are the most expensive part of **step** because they get called so many times - I think the overhead for function calling is just totalling eating them up. The shuffle operation is a distant second - nearly ten times faster, even when `n_part` is very large. However, inlining the **golovin** operations didn't reduce total run time.
+    + These have all been encapsulated in one **kernel** function
+
+- Implemented additional cases in `cases.py`. There are two major issues:
+    + Using the cases where `n_0 = 3e8` yield integer-overflows when passing `xi` to the `Superdroplet` constructor. It should be made a long.
+    + Reducing `delta_V` tends to result in floating point exceptions within ~600 timesteps.

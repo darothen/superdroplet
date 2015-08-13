@@ -107,7 +107,7 @@ cpdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k):
     cdef double tv_diff, r_sum
 
     if KERNEL_ID == 1:
-        return b*(sd_j.rcubed + sd_k.r_cubed)*4.*PI/3.
+        return b*(sd_j.rcubed + sd_k.rcubed)*4.*PI/3.
 
     p = 1./3.
     r_j = sd_j.rcubed**p

@@ -40,6 +40,7 @@ def ifloor(x):
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
+n_part  = 2**13 # number of superdroplets to use in simulation
 casename = "shima_hydro1"   
 
 settings = get_case(casename)
@@ -67,7 +68,6 @@ size_dist = lambda x: dist.pdf(x) # m^-3
 number_dens = lambda x: (n_0/RHO_WATER) * size_dist(x) # m^-6
 mass_dens = lambda x: (x*RHO_WATER)*(n_0/RHO_WATER)*size_dist(x) # is volume
 
-n_part = 2**15
 x_grid = np.sort( dist.rvs(size=n_part) ) # m^3
 r_grid = np.power( x_grid*3./np.pi/4., 1./3. ) # m
 m_grid = x_grid*RHO_WATER # kg
@@ -178,6 +178,8 @@ def sort_sds(sds):
     return to_sd_array(sds)
 
 def main(profile=False):
+
+    raw_input("Begin simulation? ")
 
     print
     print "BEGINNING MAIN ROUTINE"

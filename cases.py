@@ -38,6 +38,41 @@ def get_case(name):
         X_0 = (4.*pi/3.)*(R_0**3)
         M_0 = X_0*RHO_WATER
         m_tot_ana = 1.0
-        
+
+    elif name == "simmel_golo1":
+        t_end, plot_dt = 40*60 + 1, 10*60 
+        n_0 = 3e8
+        R_0 = 9.3e-6
+        # X_0 = 3.3e-12
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        m_tot_ana = 1.0
+
+    elif name == "simmel_golo3":
+        t_end, plot_dt = 15*60 + 1, 5*60 
+        n_0 = 3e8
+        R_0 = 13.4e-6
+        # X_0 = 3.3e-12
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        m_tot_ana = 3.0
+
+    elif name == "simmel_long1":
+        t_end, plot_dt = 40*60 + 1, 10*60 
+        n_0 = 3e8
+        R_0 = 9.3e-6
+        # X_0 = 3.3e-12
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        m_tot_ana = 1.0
+
+    elif name == "simmel_long2":
+        t_end, plot_dt = 15*60 + 1, 5*60 
+        n_0 = 1.84e8
+        R_0 = 13.0e-6
+        # X_0 = 3.3e-12
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        m_tot_ana = 2.0
 
     return case(t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana)
