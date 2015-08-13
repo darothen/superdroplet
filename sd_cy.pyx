@@ -23,12 +23,14 @@ cdef extern from "stdlib.h" nogil:
 
 ## Inline alias functions
 cdef inline int ifloor(double x): return int(floor(x))
+cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline int imax(int a, int b): return a if a >= b else b
 
 DEF VERBOSITY = 1
 DEF RHO_WATER = 1e3
 DEF RHO_AIR = 1.0
+DEF THIRD = 1./3.
 DEF PI = 3.1415926535897932384626433832
 DEF MULTI_THRESH = 1e4
 cdef double RAND_FACT = float(RAND_MAX)
@@ -93,16 +95,16 @@ ctypedef Superdroplet Superdroplet_t
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
 
-## Collision Kernel
+## Collision Kernels
 cpdef double golovin(Superdroplet_t sd_j, Superdroplet_t sd_k):
     cdef double b = 1.5e3
     cdef double rj3 = sd_j.rcubed, rk3 = sd_k.rcubed
     return b*(rj3 + rk3)*4.*PI/3.
 
-#@cython.profile(False)
 cpdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
-    cdef double E = 1.0
+    cdef double E_coll, E_coal = 1.0
     cdef double p, r_j, r_k, tv_j, tv_k
+    cdef double r_small, r_large
     cdef double tv_diff, r_sum
 
     p = 1./3.
@@ -115,7 +117,21 @@ cpdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
     tv_diff = tv_j - tv_k
     r_sum = r_j + r_k
 
-    return E*PI*(r_sum*r_sum)*fabs(tv_diff)
+    ## Long (1974) collision kernel
+    r_small = dmin(r_j, r_k)
+    r_large = dmax(r_j, r_k)
+
+    if r_large >= 50e-6: # microns
+        E_coll = 1.0
+    else:
+        E_coll = dmax(4.5e4 * (r_large*r_large*1e4) * \
+                      (1. - 3e-4/(r_small*1e2)),
+                      1e-3 )
+
+    # Limit collection efficiency to <= 1.0
+    E_coll = dmin(E_coll, 1.0)
+
+    return (E_coll*E_coal)*PI*(r_sum*r_sum)*fabs(tv_diff)
 
 cdef list multi_coalesce(Superdroplet_t sd_j, 
                          Superdroplet_t sd_k, 
@@ -134,9 +150,10 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         sd_j = sd_k.copy()
         sd_k = sd_temp
 
+    ## TODO: unlimit gamma_tilde
     gamma_tilde = dmin(gamma, ifloor(sd_j.multi/sd_k.multi))
     # print gamma, ifloor(sd_j.multi / sd_k.multi)
-    gamma_tilde = 1.
+    # gamma_tilde = 1.
     excess = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
 
     # print gamma, gamma_tilde, sd_j.multi, sd_k.multi, excess
@@ -243,6 +260,7 @@ def step(list sd_list,
 
         cdef double b = 1.5e3, rj3, rk3
 
+        cdef int big_probs = 0
         cdef double max_prob = 0.0, min_prob = 1.0
 
     for i in xrange(n_part/2):
@@ -259,6 +277,7 @@ def step(list sd_list,
 
         if prob > max_prob: max_prob = prob
         if prob < min_prob: min_prob = prob
+        if prob > 1: big_probs += 1
 
         if prob < phi: # no collision!
             sd_list[i] = sd_j
@@ -266,7 +285,8 @@ def step(list sd_list,
 
         else:
             # print sd_j, sd_k, prob
-            gamma = 1.0
+            # gamma = 1.0
+            gamma = floor(prob - floor(prob)) + 1.
             new_pair = multi_coalesce(sd_j, sd_k, gamma)
             sd_j, sd_k = new_pair
 
@@ -278,6 +298,6 @@ def step(list sd_list,
             counter += 1
 
     print "%5d collisions simulated" % counter
-    print " Max/min probabilities: ", min_prob, max_prob
+    print " Max/min probabilities (count): ", min_prob, max_prob, big_probs
 
     return sd_list
