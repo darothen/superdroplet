@@ -7,8 +7,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style='ticks')
 
-#from superdroplet import Superdroplet
-import pyximport; pyximport.install(setup_args={'include_dirs': np.get_include()})
+PYXIMPORT = True
+if PYXIMPORT:
+    import pyximport
+    pyximport.install(
+        setup_args = { 'include_dirs': np.get_include() },
+    )
+
 from sd_cy import *
 from sd_cy import step as cython_step, recycle
 
@@ -20,9 +25,9 @@ import pstats, cProfile
 
 RHO_WATER = 1e3 # kg/m^3
 
-DIAG_PLOTS = False    
+DIAG_PLOTS = True    
 DEBUG = False
-PROFILE = True
+PROFILE = False
 
 # Don't do diag plots and profile simultaneously 
 if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
@@ -33,8 +38,8 @@ def ifloor(x):
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds    
-t_end   = 1800
-plot_dt = 600
+t_end   = 3601
+plot_dt = 1200
 out_dt  = plot_dt/2
 
 # Initial size distribution
@@ -242,6 +247,12 @@ def main(profile=False):
         plt.legend()
         plt.draw()
 
+        plt.figure(2)
+        plt.plot(wms, color='k')
+        plt.twinx()
+        plt.plot(xi_s, color='r')
+        plt.legend()
+
         plt.show()
 
     return wms, xi_s, sdss
@@ -264,10 +275,11 @@ if __name__ == "__main__":
         c_step = partial(cython_step, t_c=t_c, delta_V=delta_V)
 
     elif PROFILE:
-        cProfile.run("main(profile=True)", sort='time')
+        cProfile.runctx("main(profile=True)", globals(), locals(),
+                         "sd_profile.prof")
+        s = pstats.Stats("sd_profile.prof")
+        s.strip_dirs().sort_stats("time").print_stats()
 
     else:
         out = main(profile=PROFILE)
-
-
 

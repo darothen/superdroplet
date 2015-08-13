@@ -2,6 +2,11 @@
 #cython: nonecheck=False
 #cython: boundscheck=False
 #cython: wraparound=False
+#cython: profile=False
+
+STUFF = "Hi"
+
+cimport cython
 
 import numpy as np
 cimport numpy as cnp
@@ -88,20 +93,28 @@ cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
 
 ## Collision Kernel
-cdef double golovin(Superdroplet_t sd_j, Superdroplet_t sd_k) nogil:
+cpdef double golovin(Superdroplet_t sd_j, Superdroplet_t sd_k):
     cdef double b = 1.5e3
     cdef double rj3 = sd_j.rcubed, rk3 = sd_k.rcubed
     return b*(rj3 + rk3)*4.*PI/3.
 
-cdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
+#@cython.profile(False)
+cpdef double hydro(Superdroplet_t sd_j, Superdroplet_t sd_k):
     cdef double E = 1.0
     cdef double p, r_j, r_k, tv_j, tv_k
+    cdef double tv_diff, r_sum
+
     p = 1./3.
     r_j = sd_j.rcubed**p
     r_k = sd_k.rcubed**p
+
     tv_j = sd_j._terminal_v()
     tv_k = sd_k._terminal_v()
-    return E*PI*((r_j + r_k)**2)*fabs(tv_j - tv_k)
+
+    tv_diff = tv_j - tv_k
+    r_sum = r_j + r_k
+
+    return E*PI*(r_sum*r_sum)*fabs(tv_diff)
 
 cdef list multi_coalesce(Superdroplet_t sd_j, 
                          Superdroplet_t sd_k, 
@@ -156,7 +169,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
         return [ sd_temp, sd_recycle ]
 
-cpdef list recycle(list sds):
+def recycle(list sds):
     """ For a list of superdroplets, identify which ones have 0 
     multiplicities; for each *i* of these, pick the superdroplet 
     with the *i*th-most multiplicity, split it in half, and copy 
@@ -221,6 +234,8 @@ def step(list sd_list,
         int multi_j_p, multi_k_p, excess
         double rcubed_j_p, rcubed_k_p, solute_j_p, solute_k_p
 
+        cdef double b = 1.5e3, rj3, rk3
+
     for i in xrange(n_part/2):
         sd_j = sd_list[i]
         sd_k = sd_list[i + n_part/2]
@@ -229,7 +244,7 @@ def step(list sd_list,
         xi_j = sd_j.multi
         xi_k = sd_k.multi
 
-        K_ij = hydro(sd_j, sd_k)
+        K_ij = golovin(sd_j, sd_k)
         if xi_j > xi_k:
             max_xi = xi_j
         else:
@@ -245,39 +260,6 @@ def step(list sd_list,
             gamma = 1.0
             new_pair = multi_coalesce(sd_j, sd_k, gamma)
             sd_j, sd_k = new_pair
-
-            # MULTI_COALESCE LOGIC
-            # gamma_tilde = dmin(gamma, floor(sd_j.multi/sd_k.multi))
-            # gamma_tilde = 1.
-            # excess = sd_j.multi - int(gamma_tilde*sd_k.multi)
-
-            # if excess > 0:
-
-            #     multi_j_p = excess # = sd_j.multi - int(gamma_tilde*sd_k.multi)
-            #     multi_k_p = sd_k.multi
-
-            #     rcubed_j_p = sd_j.rcubed
-            #     rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
-
-            #     solute_j_p = sd_j.solute
-            #     solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
-
-            #     sd_j = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
-            #     sd_k = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
-
-            # else:
-
-            #     multi_j_p = ifloor(sd_k.multi / 2.)
-            #     multi_k_p = sd_k.multi - multi_j_p
-
-            #     rcubed_j_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
-            #     rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
-
-            #     solute_j_p = gamma_tilde*sd_j.solute + sd_k.solute
-            #     solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
-
-            #     sd_j = Superdroplet(multi_k_p, rcubed_j_p, solute_j_p)
-            #     sd_k = Superdroplet(multi_j_p, rcubed_k_p, solute_k_p)
 
             sd_list[i] = sd_j
             sd_list[i + n_part/2] = sd_k
