@@ -38,8 +38,8 @@ def ifloor(x):
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds    
-t_end   = 3601
-plot_dt = 1200
+t_end   = 1801
+plot_dt = 600
 out_dt  = plot_dt/2
 
 # Initial size distribution
@@ -97,7 +97,7 @@ total_xi = xi_i*n_part # unitless
 N_per_SD = total_droplets / total_xi
 print " N per SD_xi: ", N_per_SD
 
-Rs = np.logspace(0., np.log10(5e3), 50)
+Rs = np.logspace(0., np.log10(5e3), 250)
 
 @jit("f8[:](f8[:],f8[:],f8[:],f8)")
 def gtilde_jit(R, r_grid, xi, sigma):
@@ -178,7 +178,7 @@ def main(profile=False):
     # Generate list of Superdroplets
     sds = [Superdroplet(xi_i, r**3., 0.) for r in r_grid]
     sds = to_sd_array(sds)
-    wm0 = np.sum([s.mass for s in sds])/1e3
+    wm0 = np.sum([s.multi*s.mass for s in sds])/1e3
     sdss = [sort_sds(sds), ]
     print "Initial water mass = ", wm0
 
@@ -190,7 +190,7 @@ def main(profile=False):
     t, ti = 0., 0
     n_drops = len(sds)
     n_init = n_drops*1
-    wms = [np.sum([s.mass for s in sds])/1e3, ]
+    wms = [np.sum([s.multi*s.mass for s in sds])/1e3, ]
     xi_s = [np.sum([s.multi for s in sds]), ]
 
     while t < t_end:
@@ -235,7 +235,7 @@ def main(profile=False):
             break
 
         if t % out_dt == 0:
-            wms.append(np.sum([s.mass for s in sds])/1e3)
+            wms.append(np.sum([s.multi*s.mass for s in sds])/1e3)
             xi_s.append(np.sum([s.multi for s in sds]))
             sdss.append(sort_sds(sds))
         print "--"*40

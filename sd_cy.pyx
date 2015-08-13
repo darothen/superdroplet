@@ -82,8 +82,8 @@ cdef class Superdroplet:
             'solute': self.solute,
         }
 
-    def copy(self):
-        return Superdroplet(**self.attributes())
+    cpdef copy(self):
+        return Superdroplet(self.multi, self.rcubed, self.solute)
 
     def __repr__(self):
         return "%d" % self.id
@@ -129,6 +129,8 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
     cdef int multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
 
+
+
     if sd_j.multi < sd_k.multi:
         sd_temp = sd_j.copy()
         sd_j = sd_k.copy()
@@ -151,10 +153,8 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         solute_j_p = sd_j.solute
         solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
 
-        return [
-            Superdroplet(multi_j_p, rcubed_j_p, solute_j_p),
-            Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
-        ]
+        sd_temp = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
+        sd_recycle = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
 
     else:
 
@@ -168,7 +168,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
                                   gamma_tilde*sd_j.rcubed + sd_k.rcubed,
                                   gamma_tilde*sd_j.solute + sd_k.solute)
 
-        return [ sd_temp, sd_recycle ]
+    return [ sd_temp, sd_recycle ]
 
 def recycle(list sds):
     """ For a list of superdroplets, identify which ones have 0 
