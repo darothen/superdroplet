@@ -1,4 +1,4 @@
-#cython: cdivision=True
+#cython: cdivision=False
 #cython: nonecheck=False
 #cython: boundscheck=False
 #cython: wraparound=False
@@ -26,9 +26,9 @@ cdef extern from "stdlib.h" nogil:
 cdef inline int ifloor(double x): return int(floor(x))
 cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
-cdef inline int imax(int a, int b): return a if a >= b else b
+cdef inline long lmax(long a, long b): return a if a >= b else b
 
-DEF KERNEL_ID = 4 # 1 = Golovin, 
+DEF KERNEL_ID = 1 # 1 = Golovin, 
                   # 2 = Hydro w/ E_coll=1
                   # 3 = Hydro w/ Long collection
                   # 4 = Hydro w/ Hall efficiencies (from Bott)
@@ -44,11 +44,11 @@ cdef int superdroplet_count
 
 cdef class Superdroplet:
 
-    cdef readonly int multi
+    cdef readonly long multi
     cdef readonly double rcubed, solute, density
     cdef readonly int id
 
-    def __init__(self, int multi, double rcubed, double solute):
+    def __init__(self, long multi, double rcubed, double solute):
         global superdroplet_count
         superdroplet_count += 1
 
@@ -170,7 +170,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     cdef Superdroplet_t sd_temp, sd_recycle
     cdef double gamma_tilde
-    cdef int multi_j_p, multi_k_p, excess
+    cdef long multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
 
     if sd_j.multi < sd_k.multi:
@@ -260,7 +260,7 @@ def step(list sd_list,
 
     # 3) Generate the uniform random numbers
     print "PROBABILITY LOOP"
-    cdef double scaling = (n_part*(n_part - 1)/2.)/ifloor(n_part/2)    
+    cdef double scaling = (n_part*(n_part - 1)/2.)/ifloor(n_part/2)
 
     print "PROB / COLLISION LOOP"
     cdef bint collisions = False
@@ -272,11 +272,11 @@ def step(list sd_list,
         # Superdroplet_t[:] new_pair
         list new_pair
         double phi, p_alpha
-        int xi_j, xi_k, max_xi
+        long xi_j, xi_k, max_xi
         double K_ij
 
         double gamma_tilde
-        int multi_j_p, multi_k_p, excess
+        long multi_j_p, multi_k_p, excess
         double rcubed_j_p, rcubed_k_p, solute_j_p, solute_k_p
 
         cdef double b = 1.5e3, rj3, rk3
@@ -293,7 +293,8 @@ def step(list sd_list,
         xi_k = sd_k.multi
 
         K_ij = kernel(sd_j, sd_k)
-        max_xi = imax(xi_j, xi_k)
+        max_xi = lmax(xi_j, xi_k)
+        # print xi_j, xi_k, max_xi
         prob = scaling*max_xi*(t_c/delta_V)*K_ij
 
         if prob > max_prob: max_prob = prob
