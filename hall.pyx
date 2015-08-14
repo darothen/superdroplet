@@ -1,4 +1,4 @@
-#cython: cdivision=False
+#cython: cdivision=True
 #cython: nonecheck=False
 #cython: boundscheck=False
 #cython: wraparound=False
