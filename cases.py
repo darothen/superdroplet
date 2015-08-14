@@ -32,7 +32,7 @@ def get_case(name):
         m_tot_ana = 1.0
 
     elif name == "shima_hydro2":
-        t_end, plot_dt = 1801, 600
+        t_end, plot_dt = 1801, 1200
         n_0 = 27.*2.**23.
         R_0 = 30.531e-6/3.
         X_0 = (4.*pi/3.)*(R_0**3)
@@ -74,5 +74,8 @@ def get_case(name):
         X_0 = (4.*pi/3.)*(R_0**3)
         M_0 = X_0*RHO_WATER
         m_tot_ana = 2.0
+
+    else:
+        raise ValueError("didn't understand case '%s'" % name)
 
     return case(t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana)

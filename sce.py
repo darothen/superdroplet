@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style='ticks')
 
-PYXIMPORT = False
+PYXIMPORT = True
 if PYXIMPORT:
     import pyximport
     pyximport.install(
@@ -19,6 +19,7 @@ if PYXIMPORT:
 
 # from sd_cy import *
 from sd_cy import step as cython_step, recycle, Superdroplet
+from sd_cy import GOLOVIN, LONG, HYDRO, HALL
 
 from cases import get_case
 
@@ -44,21 +45,22 @@ def ifloor(x):
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
 n_part  = 2**13 # number of superdroplets to use in simulation
-casename = "shima_golo"   
+casename = "shima_hydro1"
+kernel = HALL
 
 settings = get_case(casename)
 t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
-out_dt  = plot_dt/2
 
 ## MANUALLY CHANGE CASE
-t_end, plot_dt = 60*60+1, 30*60
-f = 1.0
-n_0 = (f**3)*2**27 + 2**26 + 2**25
-R_0 = 10.e-6/f
-X_0 = (4.*np.pi/3.)*(R_0**3)
-M_0 = X_0*RHO_WATER
-m_tot_ana = 1.0
-delta_V /= 1.
+# t_end, plot_dt = 20*60+1, 5*60
+# f = 1.0
+# #n_0 = (f**3)*2**27 + 2**26 + 2**25
+# n_0 = 4.8e8
+# R_0 = 10.e-6/f
+# X_0 = (4.*np.pi/3.)*(R_0**3)
+# M_0 = X_0*RHO_WATER
+# m_tot_ana = 2.0
+# delta_V /= 10.
 
 print """
 CASE - {casename:s}
@@ -72,6 +74,7 @@ INITIAL DISTRIBUTION
     M_0 = {M_0:2.1e} kg
       m = {m_tot_ana:2.2f} g m^-3
 """.format(casename=casename, **settings.__dict__)
+out_dt  = plot_dt/1
 
 def mom_dist(x, l=0., x0=X_0):
     return (x**l)*(n_0/x0)*np.exp(-x/x0)
@@ -263,7 +266,8 @@ def main(profile=False):
 
     results = []
 
-    c_step = partial(cython_step, t_c=t_c, delta_V=delta_V)
+    c_step = partial(cython_step, t_c=t_c, delta_V=delta_V,
+                     kern=kernel)
 
     t, ti = 0., 0
     n_drops = len(sds)
@@ -326,6 +330,7 @@ def main(profile=False):
         plt.draw()
 
         plt.figure(2)
+        plt.clf()
         plt.plot(wms, color='k')
         plt.twinx()
         plt.plot(xi_s, color='r')
@@ -350,7 +355,14 @@ if __name__ == "__main__":
 
         results = []
         n_steps = int(t_end / t_c)
-        c_step = partial(cython_step, t_c=t_c, delta_V=delta_V)
+        c_step = partial(cython_step, t_c=t_c, delta_V=delta_V,
+                         kern=kernel)
+
+        print "DEBUG STEP"
+
+        sds = c_step(sds)
+        # sds = recycle(sds)
+        # sds = to_sd_array(sds)
 
     elif PROFILE:
         cProfile.runctx("main(profile=True)", globals(), locals(),
@@ -366,7 +378,7 @@ if __name__ == "__main__":
             plt.clf()
 
             sdss = out[-1]
-            for sds in sdss[:-1:2]:
+            for sds in sdss:
                 r_centers, gyt = \
                     bin_mass_density(sds, True, n_bins=51, 
                                      log_r_min=-7, log_r_max=np.log(5e-2))

@@ -40,3 +40,5 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 - Implemented the Hall collection efficiencies as done by Bott (1998). It's not *really* slow, but there is a good amount of overhead associated with all of its calls. It might be a good idea to obfuscate the computation and compute them for the entire list of Superdroplet pairs in one fell swoop, kind of as implemented by Bott.
 
 - re-added some manual case setting configuration. With a Bott-like initial population and a re-scaling of number and box volume, can reproduce bi-modal droplet growth!!!!
+
+- Biggest sticking point seems to be that the larger droplets grow too fast and congeal into a larger mode too quickly. This seems related to the terminal velocity; using the parameterization from Simmel et al (2002), decrease the Tv by about a factor of 10, which slows down droplet growth.
