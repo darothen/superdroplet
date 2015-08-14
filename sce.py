@@ -1,3 +1,6 @@
+import sys
+
+import pandas as pd
 import numpy as np
 from numpy import random as npr
 from scipy.integrate import quad
@@ -7,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style='ticks')
 
-PYXIMPORT = True
+PYXIMPORT = False
 if PYXIMPORT:
     import pyximport
     pyximport.install(
@@ -39,23 +42,23 @@ def ifloor(x):
 
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
-t_c     = 5.0  # timestep, seconds 
+t_c     = 1.0  # timestep, seconds 
 n_part  = 2**13 # number of superdroplets to use in simulation
-casename = "shima_hydro1"   
+casename = "shima_golo"   
 
 settings = get_case(casename)
 t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
 out_dt  = plot_dt/2
 
 ## MANUALLY CHANGE CASE
-t_end, plot_dt = 1201, 600
+t_end, plot_dt = 60*60+1, 30*60
 f = 1.0
-n_0 = (f**3)*2**27 + 2**23
-R_0 = 15.e-6/f
+n_0 = (f**3)*2**27 + 2**26 + 2**25
+R_0 = 10.e-6/f
 X_0 = (4.*np.pi/3.)*(R_0**3)
 M_0 = X_0*RHO_WATER
-m_tot_ana = 2.0
-delta_V /= 1000.
+m_tot_ana = 1.0
+delta_V /= 1.
 
 print """
 CASE - {casename:s}
@@ -166,6 +169,56 @@ def kde_plot(sds_list=None, r_grid=None, xi=None):
 
     return xx, yy
 
+def bin_mass_density(sd_list, div_lnr=False,
+                     log_r_min=-7, log_r_max=-2, n_bins=20):
+    """ Given a list of superdroplets, compute a binned estimate of 
+    the mass density function. 
+    
+    Parameters
+    ----------
+    sd_list : list of Superdroplet objects
+    div_lnr : bool, optionl
+        Divide through by lnr to make comparison with Shima et al, 2009
+    log_r_min, log_r_max : floats, optional
+    n_bins : int, optional
+    
+    Returns
+    -------
+    rs, gyt : array of length `n_bins`
+        arrays containing the bin centers in radius space and
+        the estimate of the mass density function at those points
+    
+    """
+    
+    # Read the superdroplet atributes
+    rs = np.array([sd.rcubed**(1./3.) for sd in sd_list])
+    ns = np.array([sd.multi for sd in sd_list])
+    xs = np.array([sd.mass for sd in sd_list])*1e-3
+
+    df = pd.DataFrame({'r': rs, 'n': ns, 'x': xs})
+    
+    # Create the bin space
+    r_bins = np.logspace(log_r_min, log_r_max, n_bins)
+    x_bins = (4.*np.pi/3.)*(r_bins**3)*RHO_WATER
+    df['x_bins'] = pd.cut(df['x'], x_bins)
+
+    n_binned = df.groupby('x_bins').sum()['n']
+    
+    # Compute the number density function
+    x_widths = x_bins[1:] - x_bins[:-1]
+    x_centers = np.sqrt(x_bins[1:] * x_bins[:-1])
+
+    r_widths = r_bins[1:] - r_bins[:-1]
+    r_centers = np.sqrt(r_bins[1:] * r_bins[:-1])
+
+    nxt = n_binned / delta_V / x_widths
+    
+    # Compute the mass density funtion.
+    # Note we convert `x` from kg/m3 -> g/m3
+    gyt = 3.*((x_centers*1e3)**2) * nxt
+    
+    return r_centers, gyt
+
 if DIAG_PLOTS:
     print
     print "SMOOTHING PARTICLES"
@@ -176,7 +229,7 @@ if DIAG_PLOTS:
     plt.plot(xx, yy, '-k', lw=2, label='original')
     plt.semilogx()
     plt.xlim(1, 5000)
-    plt.ylim(0, 2.7)
+    # plt.ylim(0, 2.7)
 
     plt.xlabel("r ($\mu$m)")
     plt.ylabel("g(ln r) (g/m$^3$/unit ln r)")
@@ -194,7 +247,9 @@ def sort_sds(sds):
 def main(profile=False):
 
     if not PROFILE:
-        raw_input("Begin simulation? ")
+        end = raw_input("Begin simulation? ('n' to break)") == 'n'
+        if end: sys.exit() 
+
 
     print
     print "BEGINNING MAIN ROUTINE"
@@ -226,7 +281,7 @@ def main(profile=False):
         print "STEP %d (%5.1f s)" % (ti, t)
 
         sds = c_step(sds)
-        sds = recycle(sds)
+        # sds = recycle(sds)
         # sds = to_sd_array(sds)
 
         print len(sds)
@@ -306,3 +361,18 @@ if __name__ == "__main__":
     else:
         out = main(profile=PROFILE)
 
+        if DIAG_PLOTS:
+            plt.figure(3)
+            plt.clf()
+
+            sdss = out[-1]
+            for sds in sdss[:-1:2]:
+                r_centers, gyt = \
+                    bin_mass_density(sds, True, n_bins=51, 
+                                     log_r_min=-7, log_r_max=np.log(5e-2))
+                r_centers *= 1e6 * 10
+                plt.plot(r_centers, gyt)
+
+            plt.semilogx()
+            plt.xlabel('droplet radius (micron)')
+            plt.ylabel('mass density function, g(g m$^{-3}$)')
