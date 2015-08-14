@@ -35,10 +35,12 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 
 - Implemented additional cases in `cases.py`. There are two major issues:
     + Using the cases where `n_0 = 3e8` yield integer-overflows when passing `xi` to the `Superdroplet` constructor. It should be made a long.
-    + Reducing `delta_V` tends to result in floating point exceptions within ~600 timesteps.
+    + ~~Reducing `delta_V` tends to result in floating point exceptions within ~600 timesteps.~~ **FIXED** following move to `long`-type multiplicities
 
 - Implemented the Hall collection efficiencies as done by Bott (1998). It's not *really* slow, but there is a good amount of overhead associated with all of its calls. It might be a good idea to obfuscate the computation and compute them for the entire list of Superdroplet pairs in one fell swoop, kind of as implemented by Bott.
 
 - re-added some manual case setting configuration. With a Bott-like initial population and a re-scaling of number and box volume, can reproduce bi-modal droplet growth!!!!
 
 - Biggest sticking point seems to be that the larger droplets grow too fast and congeal into a larger mode too quickly. This seems related to the terminal velocity; using the parameterization from Simmel et al (2002), decrease the Tv by about a factor of 10, which slows down droplet growth, and fixes the problem. It also matches the figure from Lamb and Verlinde (9.5; p 392) really well.
+
+- I disagree with the `simmel_long` cases, because I think they use an incorrect version of the Long kernel (I use Bott's, theirs is very weird)
