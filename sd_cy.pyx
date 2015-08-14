@@ -72,34 +72,35 @@ cdef class Superdroplet:
             return self._terminal_v()
     cdef double _terminal_v(self):
         ## Physical formula - DOESN'T WORK WELL!
-        cdef double diameter, g, C_D, t_v
-        diameter = 2*self.rcubed**(1./3.)
-        g   = 9.8 # gravitational acceleration, m/s
-        C_D = 0.6 # drag coefficient, unitless
-        tv  = (4./3.)*(g*diameter/C_D)*(self.density/RHO_AIR)
-        tv  = sqrt(tv)
-        return tv
+        # cdef double diameter, g, C_D, t_v
+        # diameter = 2*self.rcubed**(1./3.)
+        # g   = 9.8 # gravitational acceleration, m/s
+        # C_D = 0.6 # drag coefficient, unitless
+        # tv  = (4./3.)*(g*diameter/C_D)*(self.density/RHO_AIR)
+        # tv  = sqrt(tv)
+        # return tv
 
         ## BEARD, 1976
-        # cdef double alpha, d, x, x_to_beta
+        cdef double alpha, r, d, x, x_to_beta
 
-        # d = 2.*self.rcubed**(1./3.) # diameter, micron
-        # x = self.mass #* 1e3 # convert kg -> g 
+        r = self.rcubed**(1./3.)
+        d = 2.*r*1e6 # diameter, m -> micron
+        x = self.mass * 1e3 # convert kg -> g 
 
-        # if d <= 134.43:
-        #     alpha = 457950.0
-        #     x_to_beta = x**2./3.
-        # elif 134.43 < d <= 1511.64:
-        #     alpha = 4962.0
-        #     x_to_beta = x**1./3.
-        # elif 1511.64 < d <= 3477.84:
-        #     alpha = 1732.0
-        #     x_to_beta = x**1./6.
-        # else:
-        #     alpha = 917.0
-        #     x_to_beta = 1
+        if d <= 134.43:
+            alpha = 4.5795e5
+            x_to_beta = x**(2./3.)
+        elif 134.43 < d <= 1511.64:
+            alpha = 4962.0
+            x_to_beta = x**(1./3.)
+        elif 1511.64 < d <= 3477.84:
+            alpha = 1732.0
+            x_to_beta = x**(1./6.)
+        else:
+            alpha = 917.0
+            x_to_beta = 1.0
 
-        # return 1e-2 * alpha * x_to_beta # from cm/s -> m/s
+        return 1e-2 * alpha * x_to_beta # from cm/s -> m/s
 
     property volume:
         def __get__(self):
