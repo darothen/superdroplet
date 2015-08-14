@@ -23,7 +23,8 @@ cdef extern from "stdlib.h" nogil:
     double rand()
 
 ## Inline alias functions
-cdef inline int ifloor(double x): return int(floor(x))
+cdef inline int ifloor(double x): return long(floor(x))
+cdef inline long lfloor(double x): return int(floor(x))
 cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline long lmax(long a, long b): return a if a >= b else b
@@ -178,8 +179,8 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         sd_j = sd_k.copy()
         sd_k = sd_temp
 
-    gamma_tilde = dmin(gamma, ifloor(sd_j.multi/sd_k.multi))
-    excess = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
+    gamma_tilde = dmin(gamma, lfloor(sd_j.multi/sd_k.multi))
+    excess = sd_j.multi - lfloor(gamma_tilde*sd_k.multi)
 
     if excess > 0:
 
@@ -197,7 +198,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     else: # implies excess == 0
 
-        multi_j_p = ifloor(sd_k.multi / 2)
+        multi_j_p = lfloor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
 
         sd_temp = Superdroplet(multi_k_p, 
@@ -236,7 +237,7 @@ def recycle(list sds):
         # 2) Does the donor superdroplet have data to spare?
         if sd_donor.multi <= 0: break
 
-        sd.multi = ifloor(sd_donor.multi/2)
+        sd.multi = lfloor(sd_donor.multi/2)
         sd_donor.multi -= sd.multi
 
         sd.rcubed = sd_donor.rcubed
