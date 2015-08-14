@@ -14,8 +14,8 @@ if PYXIMPORT:
         setup_args = { 'include_dirs': np.get_include() },
     )
 
-from sd_cy import *
-from sd_cy import step as cython_step, recycle
+# from sd_cy import *
+from sd_cy import step as cython_step, recycle, Superdroplet
 
 from cases import get_case
 
@@ -28,8 +28,8 @@ import pstats, cProfile
 RHO_WATER = 1e3 # kg/m^3
 
 DIAG_PLOTS = True    
-DEBUG = False
-PROFILE = False
+DEBUG      = False
+PROFILE    = False
 
 # Don't do diag plots and profile simultaneously 
 if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
@@ -39,8 +39,8 @@ def ifloor(x):
 
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
-t_c     = 1.0  # timestep, seconds 
-n_part  = 2**15 # number of superdroplets to use in simulation
+t_c     = 5.0  # timestep, seconds 
+n_part  = 2**13 # number of superdroplets to use in simulation
 casename = "shima_hydro1"   
 
 settings = get_case(casename)
@@ -48,14 +48,14 @@ t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
 out_dt  = plot_dt/2
 
 ## MANUALLY CHANGE CASE
-t_end, plot_dt = 1801, 600
+t_end, plot_dt = 1201, 600
 f = 1.0
-n_0 = (f**3)*2**28
-R_0 = 10.e-6/f
+n_0 = (f**3)*2**27 + 2**23
+R_0 = 15.e-6/f
 X_0 = (4.*np.pi/3.)*(R_0**3)
 M_0 = X_0*RHO_WATER
-m_tot_ana = 1.0
-delta_V /= 100.
+m_tot_ana = 2.0
+delta_V /= 1000.
 
 print """
 CASE - {casename:s}
@@ -175,8 +175,12 @@ if DIAG_PLOTS:
     plt.clf()
     plt.plot(xx, yy, '-k', lw=2, label='original')
     plt.semilogx()
-    plt.xlim(10, 5000)
-    plt.ylim(0, 1.8)
+    plt.xlim(1, 5000)
+    plt.ylim(0, 2.7)
+
+    plt.xlabel("r ($\mu$m)")
+    plt.ylabel("g(ln r) (g/m$^3$/unit ln r)")
+
 
 def to_sd_array(sds):
     return sds
@@ -189,7 +193,8 @@ def sort_sds(sds):
 
 def main(profile=False):
 
-    raw_input("Begin simulation? ")
+    if not PROFILE:
+        raw_input("Begin simulation? ")
 
     print
     print "BEGINNING MAIN ROUTINE"
@@ -202,7 +207,6 @@ def main(profile=False):
     print "Initial water mass = ", wm0
 
     results = []
-    n_steps = int(t_end / t_c)
 
     c_step = partial(cython_step, t_c=t_c, delta_V=delta_V)
 
@@ -222,7 +226,7 @@ def main(profile=False):
         print "STEP %d (%5.1f s)" % (ti, t)
 
         sds = c_step(sds)
-        # sds = recycle(sds)
+        sds = recycle(sds)
         # sds = to_sd_array(sds)
 
         print len(sds)

@@ -17,14 +17,14 @@ directive_defaults['binding'] = True
 import numpy as np
 
 extensions = [
-    Extension("sd_cy", ["sd_cy.pyx", ],
-              include_dirs=[np.get_include(), ],
+    Extension("*", ["*.pyx", ],
+              include_dirs=[np.get_include(), ".", ],
               define_macros=[('CYTHON_TRACE', '1')])
 ]
 
 setup(
     name = 'Superdroplet wrapper', 
-    ext_modules = extensions,
+    ext_modules = cythonize(extensions),
     cmdclass = {'build_ext': build_ext, },
 )
 

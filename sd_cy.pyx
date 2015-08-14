@@ -2,7 +2,6 @@
 #cython: nonecheck=False
 #cython: boundscheck=False
 #cython: wraparound=False
-#cython: profile=False
 
 STUFF = "Hi"
 
@@ -184,7 +183,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     if excess > 0:
 
-        multi_j_p = excess # = sd_j.multi - ifloor(gamma_tilde*sd_k.multi)
+        multi_j_p = excess 
         multi_k_p = sd_k.multi
 
         rcubed_j_p = sd_j.rcubed
@@ -198,15 +197,8 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     else: # implies excess == 0
 
-        # print "NO EXCESS", sd_j.multi, sd_k.multi
-
         multi_j_p = ifloor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
-
-        # if multi_j_p == 0:
-        #     print "WHAT J"
-        # if multi_j_p == 0:
-        #     print "WHAT K"
 
         sd_temp = Superdroplet(multi_k_p, 
                                gamma_tilde*sd_j.rcubed + sd_k.rcubed,
@@ -223,29 +215,34 @@ def recycle(list sds):
     with the *i*th-most multiplicity, split it in half, and copy 
     the properties to the remaining superdroplet. """
 
-    print "RECYCLE", 
-
-    sds.sort(cmp=sd_compare)
+    print "RECYCLE"
 
     cdef:
-        int i
-        Superdroplet_t sd, sd_donor
+        int i, n_parts
+        Superdroplet sd, sd_donor
 
-    for i, sd in enumerate(sds):
+    sds.sort(cmp=sd_compare)
+    n_parts = len(sds)
+
+    for i in range(n_parts / 2):
+        sd = sds[i]
+
         # Short circuits:
         # 1) Did we already encounter non-zero superdroplets?
         if sd.multi > 0: break
 
-        sd_donor = sds[-i]
+        sd_donor = sds[n_parts-i-1]
+
         # 2) Does the donor superdroplet have data to spare?
         if sd_donor.multi <= 0: break
 
         sd.multi = ifloor(sd_donor.multi/2)
-        sd_donor.multi -= ifloor(sd_donor.multi/2)
+        sd_donor.multi -= sd.multi
 
         sd.rcubed = sd_donor.rcubed
         sd.solute = sd_donor.solute
-    print " %d superdroplets" % i
+
+    print "   %d superdroplets recycled" % i
 
     return sds
 
