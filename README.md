@@ -41,4 +41,4 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 
 - re-added some manual case setting configuration. With a Bott-like initial population and a re-scaling of number and box volume, can reproduce bi-modal droplet growth!!!!
 
-- Biggest sticking point seems to be that the larger droplets grow too fast and congeal into a larger mode too quickly. This seems related to the terminal velocity; using the parameterization from Simmel et al (2002), decrease the Tv by about a factor of 10, which slows down droplet growth.
+- Biggest sticking point seems to be that the larger droplets grow too fast and congeal into a larger mode too quickly. This seems related to the terminal velocity; using the parameterization from Simmel et al (2002), decrease the Tv by about a factor of 10, which slows down droplet growth, and fixes the problem. It also matches the figure from Lamb and Verlinde (9.5; p 392) really well.

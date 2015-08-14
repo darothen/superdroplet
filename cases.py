@@ -2,6 +2,8 @@
 from numpy import pi
 from collections import namedtuple
 
+from utils import estimate_n0
+
 RHO_WATER = 1e3 # kg/m^3
 
 case = namedtuple("case", ['t_end', 'plot_dt', # seconds
@@ -74,6 +76,33 @@ def get_case(name):
         X_0 = (4.*pi/3.)*(R_0**3)
         M_0 = X_0*RHO_WATER
         m_tot_ana = 2.0
+
+    elif name == "bott_golo":
+        ## Bott (1998) - Figure 2
+        t_end, plot_dt = 60*60+1, 15*60
+        m_tot_ana = 1.0
+        R_0 = 10.e-6
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        n_0 = estimate_n0(R_0, m_tot_ana)
+
+    elif name == "bott_hydro1":
+        ## Bott (1998) - Figure 3
+        t_end, plot_dt = 60*60+1, 15*60
+        m_tot_ana = 1.0
+        R_0 = 10.e-6
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        n_0 = estimate_n0(R_0, m_tot_ana)
+
+    elif name == "bott_hydro2":
+        ## Bott (1998) - Figure 5
+        t_end, plot_dt = 20*60+1, 5*60
+        m_tot_ana = 2.0
+        R_0 = 10.e-6
+        X_0 = (4.*pi/3.)*(R_0**3)
+        M_0 = X_0*RHO_WATER
+        n_0 = estimate_n0(R_0, m_tot_ana)
 
     else:
         raise ValueError("didn't understand case '%s'" % name)

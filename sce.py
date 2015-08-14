@@ -22,6 +22,7 @@ from sd_cy import step as cython_step, recycle, Superdroplet
 from sd_cy import GOLOVIN, LONG, HYDRO, HALL
 
 from cases import get_case
+from utils import exp_dist_moments, ifloor, estimate_n0
 
 from numba import jit
 from functools import partial
@@ -38,29 +39,25 @@ PROFILE    = False
 # Don't do diag plots and profile simultaneously 
 if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
 
-def ifloor(x):
-    return int(np.floor(x))
-
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
 n_part  = 2**13 # number of superdroplets to use in simulation
-casename = "shima_hydro1"
-kernel = HALL
+casename = "bott_hydro2"
+kernel = LONG
 
 settings = get_case(casename)
 t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
 
 ## MANUALLY CHANGE CASE
-# t_end, plot_dt = 20*60+1, 5*60
+# t_end, plot_dt = 60*60+1, 30*60
+# m_tot_ana = 1.0
 # f = 1.0
-# #n_0 = (f**3)*2**27 + 2**26 + 2**25
-# n_0 = 4.8e8
 # R_0 = 10.e-6/f
 # X_0 = (4.*np.pi/3.)*(R_0**3)
 # M_0 = X_0*RHO_WATER
-# m_tot_ana = 2.0
-# delta_V /= 10.
+# # n_0 = (f**3)*2**27 + 2**26 + 2**25
+# n_0 = estimate_n0(R_0, m_tot_ana)
 
 print """
 CASE - {casename:s}
@@ -76,9 +73,7 @@ INITIAL DISTRIBUTION
 """.format(casename=casename, **settings.__dict__)
 out_dt  = plot_dt/1
 
-def mom_dist(x, l=0., x0=X_0):
-    return (x**l)*(n_0/x0)*np.exp(-x/x0)
-
+mom_dist = exp_dist_moments
 dist = sse(scale=X_0)
 size_dist = lambda x: dist.pdf(x) # m^-3
 number_dens = lambda x: (n_0/RHO_WATER) * size_dist(x) # m^-6
@@ -94,7 +89,8 @@ print "  volume: %1.3e - %1.3e m^3" % (x_grid[0], x_grid[-1])
 print "    mass: %1.3e - %1.3e kg" % (m_grid[0], m_grid[-1])
 print
 
-m_tot_cal = quad(mom_dist, m_grid[0], m_grid[-1], args=(1., M_0))[0]*1e3
+m_tot_cal = quad(mom_dist, m_grid[0], m_grid[-1], 
+                 args=(n_0, M_0, 1.))[0]*1e3
 
 print "TOTAL MASS"
 print "   estimate:", m_tot_ana
@@ -380,7 +376,7 @@ if __name__ == "__main__":
             sdss = out[-1]
             for sds in sdss:
                 r_centers, gyt = \
-                    bin_mass_density(sds, True, n_bins=51, 
+                    bin_mass_density(sds, True, n_bins=61, 
                                      log_r_min=-7, log_r_max=np.log(5e-2))
                 r_centers *= 1e6 * 10
                 plt.plot(r_centers, gyt)
