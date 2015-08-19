@@ -25,8 +25,6 @@ cdef extern from "stdlib.h" nogil:
     double rand()
 
 ## Inline alias functions
-# cdef inline int ifloor(double x): return long(floor(x))
-# cdef inline long lfloor(double x): return int(floor(x))
 cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline long lmax(long a, long b): return a if a >= b else b
