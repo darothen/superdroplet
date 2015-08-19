@@ -43,8 +43,8 @@ if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
 n_part  = 2**17 # number of superdroplets to use in simulation
-casename = "shima_hydro1"
-kernel = GOLOVIN
+casename = "shima_hydro2"
+kernel = HALL
 
 settings = get_case(casename)
 t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings

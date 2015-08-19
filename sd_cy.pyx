@@ -25,8 +25,8 @@ cdef extern from "stdlib.h" nogil:
     double rand()
 
 ## Inline alias functions
-cdef inline int ifloor(double x): return long(floor(x))
-cdef inline long lfloor(double x): return int(floor(x))
+# cdef inline int ifloor(double x): return long(floor(x))
+# cdef inline long lfloor(double x): return int(floor(x))
 cdef inline double dmax(double a, double b): return a if a >= b else b
 cdef inline double dmin(double a, double b): return a if a <= b else b
 cdef inline long lmax(long a, long b): return a if a >= b else b
@@ -71,8 +71,8 @@ cdef class Superdroplet:
 
     property terminal_v:
         def __get__(self):      
-            return self._terminal_v()
-    cdef double _terminal_v(self):
+            return self.calc_terminal_v()
+    cdef double calc_terminal_v(self):
         ## Physical formula - DOESN'T WORK WELL!
         # cdef double diameter, g, C_D, t_v
         # diameter = 2*self.rcubed**(1./3.)
@@ -87,7 +87,7 @@ cdef class Superdroplet:
 
         r = self.rcubed**(1./3.)
         d = 2.*r*1e6 # diameter, m -> micron
-        x = self.mass * 1e3 # convert kg -> g 
+        x = self.calc_mass() * 1e3 # convert kg -> g 
 
         if d <= 134.43:
             alpha = 4.5795e5
@@ -106,15 +106,15 @@ cdef class Superdroplet:
 
     property volume:
         def __get__(self):
-            return self._volume()
-    cdef double _volume(self) nogil:
+            return self.calc_volume()
+    cdef double calc_volume(self) nogil:
         return self.rcubed*4.*PI/3.
 
     property mass:
         def __get__(self):
-            return self._mass()
-    cdef double _mass(self) nogil:
-        return self.density*self._volume()
+            return self.calc_mass()
+    cdef double calc_mass(self) nogil:
+        return self.density*self.calc_volume()
 
     def attributes(self):
         return { 
@@ -131,6 +131,28 @@ cdef class Superdroplet:
 
 ctypedef Superdroplet Superdroplet_t
 
+cdef double tv(double r, double mass):
+    ## BEARD, 1976
+    cdef double alpha, d, x, x_to_beta
+
+    d = 2.*r*1e6 # diameter, m -> micron
+    x = mass * 1e3 # convert kg -> g 
+
+    if d <= 134.43:
+        alpha = 4.5795e5
+        x_to_beta = x**(2./3.)
+    elif 134.43 < d <= 1511.64:
+        alpha = 4962.0
+        x_to_beta = x**(1./3.)
+    elif 1511.64 < d <= 3477.84:
+        alpha = 1732.0
+        x_to_beta = x**(1./6.)
+    else:
+        alpha = 917.0
+        x_to_beta = 1.0
+
+    return 1e-2 * alpha * x_to_beta # from cm/s -> m/s
+
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
 
@@ -138,7 +160,7 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
                     kernel_id_t kern):
     cdef double b = 1.5e3 # constant for Golovin
     cdef double E_coll, E_coal
-    cdef double p, r_j, r_k, 
+    cdef double p, r_j, r_k, x_j, x_k
     cdef double tv_j, tv_k
     cdef double r_small, r_large
     cdef double tv_diff, r_sum
@@ -149,10 +171,12 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
     p = 1./3.
     r_j = sd_j.rcubed**p
     r_k = sd_k.rcubed**p
+    x_j = sd_j.calc_mass()
+    x_k = sd_k.calc_mass()
 
-    tv_j = sd_j._terminal_v()
-    tv_k = sd_k._terminal_v()
-
+    tv_j = sd_j.calc_terminal_v() 
+    tv_k = sd_k.calc_terminal_v()
+    
     tv_diff = tv_j - tv_k
     r_sum = r_j + r_k
 
@@ -212,8 +236,8 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         sd_j = sd_k.copy()
         sd_k = sd_temp
 
-    gamma_tilde = dmin(gamma, lfloor(sd_j.multi/sd_k.multi))
-    excess = sd_j.multi - lfloor(gamma_tilde*sd_k.multi)
+    gamma_tilde = dmin(gamma, (<long> floor(sd_j.multi/sd_k.multi)))
+    excess = sd_j.multi - (<long> floor(gamma_tilde*sd_k.multi))
 
     if excess > 0:
 
@@ -231,7 +255,7 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
 
     else: # implies excess == 0
 
-        multi_j_p = lfloor(sd_k.multi / 2)
+        multi_j_p = <long> floor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
 
         sd_temp = Superdroplet(multi_k_p, 
@@ -270,7 +294,7 @@ def recycle(list sds):
         # 2) Does the donor superdroplet have data to spare?
         if sd_donor.multi <= 0: break
 
-        sd.multi = lfloor(sd_donor.multi/2)
+        sd.multi = <long> floor(sd_donor.multi/2)
         sd_donor.multi -= sd.multi
 
         sd.rcubed = sd_donor.rcubed
@@ -294,7 +318,7 @@ def step(list sd_list,
 
     # 3) Generate the uniform random numbers
     print "PROBABILITY LOOP"
-    cdef double scaling = (n_part*(n_part - 1)/2.)/ifloor(n_part/2)
+    cdef double scaling = (n_part*(n_part - 1)/2.)/(<int> floor(n_part/2))
 
     print "PROB / COLLISION LOOP"
     cdef bint collisions = False
