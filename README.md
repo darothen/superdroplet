@@ -45,3 +45,4 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 
 - I disagree with the `simmel_long` cases, because I think they use an incorrect version of the Long kernel (I use Bott's, theirs is very weird). My secondary peaks develop a bit too slowly.
 
+- If building on **legion**, use system glibc package, not the special module.

@@ -2,6 +2,8 @@
 #cython: nonecheck=False
 #cython: boundscheck=False
 #cython: wraparound=False
+#cython: profile=True
+#cython: linetrace=True
 
 STUFF = "Hi"
 
@@ -132,7 +134,7 @@ ctypedef Superdroplet Superdroplet_t
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
 
-cpdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
+cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
                     kernel_id_t kern):
     cdef double b = 1.5e3 # constant for Golovin
     cdef double E_coll, E_coal

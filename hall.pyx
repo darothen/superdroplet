@@ -2,6 +2,8 @@
 #cython: nonecheck=False
 #cython: boundscheck=False
 #cython: wraparound=False
+#cython: profile=True
+#cython: linetrace=True
 
 cimport cython
 import numpy as np
