@@ -8,7 +8,10 @@ from scipy.stats import expon as sse
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-sns.set(style='ticks')
+sns.set(style="ticks", rc={ 'axes.labelsize': 14,
+                            'ytick.labelsize': 12,
+                            'xtick.labelsize': 12,
+                            'legend.fontsize': 13, } )
 
 PYXIMPORT = True
 if PYXIMPORT:
@@ -22,9 +25,11 @@ from sd_cy import step as cython_step, recycle, Superdroplet
 from sd_cy import GOLOVIN, LONG, HYDRO, HALL
 
 from cases import get_case
-from utils import exp_dist_moments, ifloor, estimate_n0
+from utils import ( exp_dist_moments, ifloor, estimate_n0, 
+                    s_to_min_s, fmt_time, colortext_legend )
 
 from numba import jit
+from collections import OrderedDict
 from functools import partial
 from operator import attrgetter
 
@@ -42,8 +47,8 @@ if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
 ## Cell/experiment setup
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
-n_part  = 2**15 # number of superdroplets to use in simulation
-casename = "shima_hydro2"
+n_part  = 2**13 # number of superdroplets to use in simulation
+casename = "bott_hydro1"
 kernel = HALL
 
 settings = get_case(casename)
@@ -72,6 +77,9 @@ INITIAL DISTRIBUTION
       m = {m_tot_ana:2.2f} g m^-3
 """.format(casename=casename, **settings.__dict__)
 out_dt  = plot_dt/1
+
+# Helper function for checking if we're at an output time
+is_output_step = lambda ti: ti % int(out_dt / t_c) == 0
 
 mom_dist = exp_dist_moments
 dist = sse(scale=X_0)
@@ -159,7 +167,8 @@ def kde_plot(sds_list=None, r_grid=None, xi=None):
         else:
             print "xi_i type issue", type(xi), xi
 
-    sigma_0 = 0.62
+    # Use the larger value because it generally smooths things more nicely
+    sigma_0 = 1.5 # 0.62
     sigma = sigma_0*(len(r_grid)**(-1./5.))
 
     xx = Rs
@@ -225,7 +234,7 @@ if DIAG_PLOTS:
 
     fig = plt.figure(1)
     plt.clf()
-    plt.plot(xx, yy, '-k', lw=2, label='original')
+    plt.plot(xx, yy, '-k', lw=2, label='initial')
     plt.semilogx()
     plt.xlim(1, 5000)
     # plt.ylim(0, 2.7)
@@ -271,17 +280,24 @@ def main(profile=False):
     wms = [np.sum([s.multi*s.mass for s in sds])/1e3, ]
     xi_s = [np.sum([s.multi for s in sds]), ]
 
+    color_map = OrderedDict(initial='k')
+
     while t < t_end:
-        t += t_c
         ti += 1
+        t = ti * t_c # diagnose time from step to avoid accumulating
+                     # floating point errors which screw things up
+
+        minutes, seconds = s_to_min_s(t)
 
         if profile and ti > 10:
             break
 
-        print "STEP %d (%5.1f s)" % (ti, t)
+        print "STEP %d (%s)" % (ti, fmt_time(minutes, seconds))
+        print ti, out_dt, ti % out_dt, is_output_step(ti)
+        print minutes, seconds
 
         sds = c_step(sds)
-        # sds = recycle(sds)
+        sds = recycle(sds)
         # sds = to_sd_array(sds)
 
         print len(sds)
@@ -293,13 +309,28 @@ def main(profile=False):
 
         print
 
-        if t % plot_dt == 0:
+        if is_output_step(ti):
             if DIAG_PLOTS:
+
+                minutes_str = fmt_time(minutes, seconds, True)
+
                 xx, yy = kde_plot(sds)
                 plt.figure(1)
-                plt.plot(xx, yy, label='t = %4d' % t)
-                plt.draw()
+                lines = plt.plot(xx, yy, lw=2.5, label=minutes_str)
+                l = lines[0]
                 results.append(yy)
+
+                r_centers, gyt = \
+                    bin_mass_density(sds, True, n_bins=41, 
+                                     log_r_min=-7, log_r_max=np.log(5e-2))
+                r_centers *= 1e6 * 10
+                plt.plot(r_centers, gyt, ls='--', color=l.get_color(),
+                        # label='%s [binned]' % minutes_str
+                )
+
+                color_map[minutes_str] = l.get_color()
+
+                plt.draw()
 
         if n_drops < n_init/(2**3):            
             if DIAG_PLOTS:
@@ -308,11 +339,10 @@ def main(profile=False):
                 plt.plot(xx, yy, label='crash')
                 plt.draw()
 
-
             print "Superdroplet number dropped too low"
             break
 
-        if t % out_dt == 0:
+        if is_output_step(ti):
             wms.append(np.sum([s.multi*s.mass for s in sds])/1e3)
             xi_s.append(np.sum([s.multi for s in sds]))
             sdss.append(sort_sds(sds))
@@ -321,16 +351,25 @@ def main(profile=False):
     if DIAG_PLOTS:
         xx, yy = kde_plot(sds)
         plt.figure(1)
-        plt.plot(xx, yy, '-b', label='final')
-        plt.legend()
+        # plt.plot(xx, yy, '-b', label='final')
+        plt.legend(loc='best')
+
+        ax = plt.gca()
+        colortext_legend(color_map, ax, fontsize=14, 
+                         loc='upper left',
+                         bbox_to_anchor=(-0.1, 1.0))
+
         plt.draw()
 
-        plt.figure(2)
-        plt.clf()
-        plt.plot(wms, color='k')
-        plt.twinx()
-        plt.plot(xi_s, color='r')
-        plt.legend()
+        ## Additional diagnostics - 
+        ## 1) total water mass, black (should be flat)
+        ## 2) total SD number, red (should decrease over time)
+        # plt.figure(2)
+        # plt.clf()
+        # plt.plot(wms, color='k')
+        # plt.twinx()
+        # plt.plot(xi_s, color='r')
+        # plt.legend()
 
         plt.show()
 
@@ -369,18 +408,18 @@ if __name__ == "__main__":
     else:
         out = main(profile=PROFILE)
 
-        if DIAG_PLOTS:
-            plt.figure(3)
-            plt.clf()
+        # if DIAG_PLOTS:
+        #     plt.figure(3)
+        #     plt.clf()
 
-            sdss = out[-1]
-            for sds in sdss:
-                r_centers, gyt = \
-                    bin_mass_density(sds, True, n_bins=61, 
-                                     log_r_min=-7, log_r_max=np.log(5e-2))
-                r_centers *= 1e6 * 10
-                plt.plot(r_centers, gyt)
+        #     sdss = out[-1]
+        #     for sds in sdss:
+        #         r_centers, gyt = \
+        #             bin_mass_density(sds, True, n_bins=61, 
+        #                              log_r_min=-7, log_r_max=np.log(5e-2))
+        #         r_centers *= 1e6 * 10
+        #         plt.plot(r_centers, gyt)
 
-            plt.semilogx()
-            plt.xlabel('droplet radius (micron)')
-            plt.ylabel('mass density function, g(g m$^{-3}$)')
+        #     plt.semilogx()
+        #     plt.xlabel('droplet radius (micron)')
+        #     plt.ylabel('mass density function, g(g m$^{-3}$)')
