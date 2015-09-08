@@ -67,6 +67,11 @@ cdef class Superdroplet:
         self.density = RHO_WATER # kg/m3
         self.id = superdroplet_count
 
+    cdef void set_properties(self, multi, rcubed, solute):
+        self.multi = multi
+        self.rcubed = rcubed
+        self.solute = solute
+
     property terminal_v:
         def __get__(self):      
             return self.calc_terminal_v()
@@ -217,7 +222,7 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
 
     return (E_coll*E_coal)*PI*(r_sum*r_sum)*fabs(tv_diff)
 
-cdef list multi_coalesce(Superdroplet_t sd_j, 
+cdef void multi_coalesce(Superdroplet_t sd_j, 
                          Superdroplet_t sd_k, 
                          double gamma):
     """
@@ -248,22 +253,20 @@ cdef list multi_coalesce(Superdroplet_t sd_j,
         solute_j_p = sd_j.solute
         solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
 
-        sd_temp = Superdroplet(multi_j_p, rcubed_j_p, solute_j_p)
-        sd_recycle = Superdroplet(multi_k_p, rcubed_k_p, solute_k_p)
+        sd_j.set_properties(multi_j_p, rcubed_j_p, solute_j_p)
+        sd_k.set_properties(multi_k_p, rcubed_k_p, solute_k_p)
 
     else: # implies excess == 0
 
         multi_j_p = <long> floor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
 
-        sd_temp = Superdroplet(multi_k_p, 
-                               gamma_tilde*sd_j.rcubed + sd_k.rcubed,
-                               gamma_tilde*sd_j.solute + sd_k.solute)
-        sd_recycle = Superdroplet(multi_j_p, 
-                                  gamma_tilde*sd_j.rcubed + sd_k.rcubed,
-                                  gamma_tilde*sd_j.solute + sd_k.solute)
-
-    return [ sd_temp, sd_recycle ]
+        sd_j.set_properties(multi_k_p, 
+                            gamma_tilde*sd_j.rcubed + sd_k.rcubed,
+                            gamma_tilde*sd_j.solute + sd_k.solute)
+        sd_k.set_properties(multi_j_p, 
+                            gamma_tilde*sd_j.rcubed + sd_k.rcubed,
+                            gamma_tilde*sd_j.solute + sd_k.solute)
 
 def recycle(list sds):
     """ For a list of superdroplets, identify which ones have 0 
@@ -364,8 +367,7 @@ def step(list sd_list,
 
         else:
             gamma = floor(prob) + 1
-            new_pair = multi_coalesce(sd_j, sd_k, gamma)
-            sd_j, sd_k = new_pair
+            multi_coalesce(sd_j, sd_k, gamma)
 
             sd_list[i] = sd_j
             sd_list[i + n_part/2] = sd_k
