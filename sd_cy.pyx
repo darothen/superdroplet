@@ -226,7 +226,9 @@ cdef void multi_coalesce(Superdroplet_t sd_j,
                          Superdroplet_t sd_k, 
                          double gamma):
     """
-    Coalesce two superdroplets with one another.
+    Coalesce two superdroplets with one another. Assume
+    sd_j.multi > sd_k.multi
+
     """
 
     cdef Superdroplet_t sd_temp, sd_recycle
@@ -234,13 +236,8 @@ cdef void multi_coalesce(Superdroplet_t sd_j,
     cdef long multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
 
-    if sd_j.multi < sd_k.multi:
-        sd_temp = sd_j.copy()
-        sd_j = sd_k.copy()
-        sd_k = sd_temp
-
-    gamma_tilde = dmin(gamma, (<long> floor(sd_j.multi/sd_k.multi)))
-    excess = sd_j.multi - (<long> floor(gamma_tilde*sd_k.multi))
+    gamma_tilde = dmin(gamma, <long> floor(sd_j.multi/sd_k.multi))
+    excess = sd_j.multi - <long> floor(gamma_tilde*sd_k.multi)
 
     if excess > 0:
 
@@ -370,7 +367,10 @@ def step(list sd_list,
         # else:
         if ( prob - floor(prob) ) >= phi:
             gamma = floor(prob) + 1
-            multi_coalesce(sd_j, sd_k, gamma)
+            if xi_j > xi_k:
+                multi_coalesce(sd_j, sd_k, gamma)
+            else:
+                multi_coalesce(sd_k, sd_j, gamma)
 
             # sd_list[i] = sd_j
             # sd_list[i + n_part/2] = sd_k
