@@ -76,15 +76,6 @@ cdef class Superdroplet:
         def __get__(self):      
             return self.calc_terminal_v()
     cdef double calc_terminal_v(self):
-        ## Physical formula - DOESN'T WORK WELL!
-        # cdef double diameter, g, C_D, t_v
-        # diameter = 2*self.rcubed**(1./3.)
-        # g   = 9.8 # gravitational acceleration, m/s
-        # C_D = 0.6 # drag coefficient, unitless
-        # tv  = (4./3.)*(g*diameter/C_D)*(self.density/RHO_AIR)
-        # tv  = sqrt(tv)
-        # return tv
-
         ## BEARD, 1976
         cdef double alpha, r, d, x, x_to_beta
 
@@ -211,7 +202,6 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
         r_large = dmax(r_j, r_k)*1e6
 
         E_coll = hall_effic(r_large, r_small)
-        # print r_large, r_small / r_large, E_coll
 
     else: 
         E_coll = 1.0
@@ -343,7 +333,6 @@ def step(list sd_list,
 
         K_ij = kernel(sd_j, sd_k, kern)
         max_xi = lmax(xi_j, xi_k)
-        # print xi_j, xi_k, max_xi
         prob = scaling*max_xi*(t_c/delta_V)*K_ij
 
         if prob > max_prob: max_prob = prob
