@@ -25,9 +25,9 @@ cdef extern from "stdlib.h" nogil:
     double rand()
 
 ## Inline alias functions
-cdef inline double dmax(double a, double b): return a if a >= b else b
-cdef inline double dmin(double a, double b): return a if a <= b else b
-cdef inline long lmax(long a, long b): return a if a >= b else b
+cdef inline double dmax(double a, double b) nogil: return a if a >= b else b
+cdef inline double dmin(double a, double b) nogil: return a if a <= b else b
+cdef inline long lmax(long a, long b) nogil: return a if a >= b else b
 
 ctypedef kernel_id kernel_id_t
 cpdef enum kernel_id:
@@ -67,7 +67,10 @@ cdef class Superdroplet:
         self.density = RHO_WATER # kg/m3
         self.id = superdroplet_count
 
-    cdef void set_properties(self, multi, rcubed, solute):
+    cdef void set_properties(Superdroplet self, 
+                             long multi, 
+                             double rcubed, 
+                             double solute) nogil:
         self.multi = multi
         self.rcubed = rcubed
         self.solute = solute
@@ -214,14 +217,13 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
 
 cdef void multi_coalesce(Superdroplet_t sd_j, 
                          Superdroplet_t sd_k, 
-                         double gamma):
+                         double gamma) nogil:
     """
     Coalesce two superdroplets with one another. Assume
     sd_j.multi > sd_k.multi
 
     """
 
-    cdef Superdroplet_t sd_temp, sd_recycle
     cdef double gamma_tilde
     cdef long multi_j_p, multi_k_p, excess
     cdef double solute_j_p, solute_k_p, rcubed_j_p, rcubed_k_p
