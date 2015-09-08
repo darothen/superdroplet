@@ -261,12 +261,14 @@ cdef void multi_coalesce(Superdroplet_t sd_j,
         multi_j_p = <long> floor(sd_k.multi / 2)
         multi_k_p = sd_k.multi - multi_j_p
 
-        sd_j.set_properties(multi_k_p, 
-                            gamma_tilde*sd_j.rcubed + sd_k.rcubed,
-                            gamma_tilde*sd_j.solute + sd_k.solute)
-        sd_k.set_properties(multi_j_p, 
-                            gamma_tilde*sd_j.rcubed + sd_k.rcubed,
-                            gamma_tilde*sd_j.solute + sd_k.solute)
+        rcubed_j_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+        rcubed_k_p = gamma_tilde*sd_j.rcubed + sd_k.rcubed
+
+        solute_j_p = gamma_tilde*sd_j.solute + sd_k.solute
+        solute_k_p = gamma_tilde*sd_j.solute + sd_k.solute
+
+        sd_j.set_properties(multi_k_p, rcubed_j_p, solute_j_p)
+        sd_k.set_properties(multi_j_p, rcubed_k_p, solute_k_p)
 
 def recycle(list sds):
     """ For a list of superdroplets, identify which ones have 0 
@@ -361,16 +363,17 @@ def step(list sd_list,
         if prob > 1: big_probs += 1
 
         # Limit the probability when comparing to the uni draw
-        if (prob - floor(prob)) < phi: # no collision!
-            sd_list[i] = sd_j
-            sd_list[i + n_part/2] = sd_k
+        # if (prob - floor(prob)) < phi: # no collision!
+        #     sd_list[i] = sd_j
+        #     sd_list[i + n_part/2] = sd_k
 
-        else:
+        # else:
+        if ( prob - floor(prob) ) >= phi:
             gamma = floor(prob) + 1
             multi_coalesce(sd_j, sd_k, gamma)
 
-            sd_list[i] = sd_j
-            sd_list[i + n_part/2] = sd_k
+            # sd_list[i] = sd_j
+            # sd_list[i + n_part/2] = sd_k
 
             if not collisions:
                 collisions = True
