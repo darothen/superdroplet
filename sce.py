@@ -21,8 +21,9 @@ if PYXIMPORT:
     )
 
 # from sd_cy import *
-from sd_cy import step as cython_step, recycle, Superdroplet
+from sd_cy import step as cython_step, recycle
 from sd_cy import GOLOVIN, LONG, HYDRO, HALL
+from superdroplet import Superdroplet
 
 from cases import get_case
 from utils import ( exp_dist_moments, ifloor, estimate_n0, 
@@ -48,8 +49,8 @@ if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds 
 n_part  = 2**13 # number of superdroplets to use in simulation
-casename = "shima_golo"
-kernel = GOLOVIN
+casename = "shima_hydro1"
+kernel = HALL
 
 settings = get_case(casename)
 t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
@@ -244,8 +245,8 @@ if DIAG_PLOTS:
 
 
 def to_sd_array(sds):
-    # return sds
-    return np.asarray(sds, dtype=Superdroplet)
+    return sds
+    # return np.asarray(sds, dtype=Superdroplet)
 
 def sort_sds(sds):
     cmpfun = attrgetter('multi')
@@ -298,7 +299,7 @@ def main(profile=False):
 
         sds = c_step(sds)
         # sds = recycle(sds)
-        # sds = to_sd_array(sds)
+        sds = to_sd_array(sds)
 
         print len(sds)
         if len(sds) < n_drops:

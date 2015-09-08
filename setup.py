@@ -11,16 +11,18 @@ from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 
 from Cython.Compiler.Options import directive_defaults
-directive_defaults['linetrace'] = True
-directive_defaults['binding'] = True
+# directive_defaults['linetrace'] = True
+# directive_defaults['binding'] = True
 
 import numpy as np
 
 extensions = [
     Extension("*", ["*.pyx", ],
               include_dirs=[np.get_include(), ".", ],
-              define_macros=[('CYTHON_TRACE', '1'),
-                             ('CYTHON_TRACE_NOGIL', '1'),])
+              define_macros=[
+                  # ('CYTHON_TRACE', '1'),
+                  # ('CYTHON_TRACE_NOGIL', '1'),
+              ])
 ]
 
 setup(
