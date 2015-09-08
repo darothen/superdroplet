@@ -43,4 +43,6 @@ First, build the module using **setup.py** to be sure that the line tracing macr
 
 - Biggest sticking point seems to be that the larger droplets grow too fast and congeal into a larger mode too quickly. This seems related to the terminal velocity; using the parameterization from Simmel et al (2002), decrease the Tv by about a factor of 10, which slows down droplet growth, and fixes the problem. It also matches the figure from Lamb and Verlinde (9.5; p 392) really well.
 
-- I disagree with the `simmel_long` cases, because I think they use an incorrect version of the Long kernel (I use Bott's, theirs is very weird)
+- I disagree with the `simmel_long` cases, because I think they use an incorrect version of the Long kernel (I use Bott's, theirs is very weird). My secondary peaks develop a bit too slowly.
+
+- If building on **legion**, use system glibc package, not the special module.

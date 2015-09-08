@@ -13,7 +13,7 @@ sns.set(style="ticks", rc={ 'axes.labelsize': 14,
                             'xtick.labelsize': 12,
                             'legend.fontsize': 13, } )
 
-PYXIMPORT = True
+PYXIMPORT = False
 if PYXIMPORT:
     import pyximport
     pyximport.install(
