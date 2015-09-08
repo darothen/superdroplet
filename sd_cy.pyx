@@ -326,25 +326,16 @@ def step(list sd_list,
     cdef:
         unsigned int i
         Superdroplet_t sd_j, sd_k
-        double gamma
-        # Superdroplet_t[:] new_pair
-        list new_pair
-        double phi, p_alpha
+        double gamma, phi, prob
         long xi_j, xi_k, max_xi
         double K_ij
-
-        double gamma_tilde
-        long multi_j_p, multi_k_p, excess
-        double rcubed_j_p, rcubed_k_p, solute_j_p, solute_k_p
-
-        cdef double b = 1.5e3, rj3, rk3
 
         cdef int big_probs = 0
         cdef double max_prob = 0.0, min_prob = 1.0
 
     for i in xrange(n_part/2):
-        sd_j = sd_list[i]
-        sd_k = sd_list[i + n_part/2]
+        sd_j = (<Superdroplet_t> sd_list[i])
+        sd_k = (<Superdroplet_t> sd_list[i + n_part/2])
 
         phi = rand() / RAND_FACT
         xi_j = sd_j.multi
@@ -359,21 +350,13 @@ def step(list sd_list,
         if prob < min_prob: min_prob = prob
         if prob > 1: big_probs += 1
 
-        # Limit the probability when comparing to the uni draw
-        # if (prob - floor(prob)) < phi: # no collision!
-        #     sd_list[i] = sd_j
-        #     sd_list[i + n_part/2] = sd_k
-
-        # else:
+        # Check for collision and coalesce if necessary
         if ( prob - floor(prob) ) >= phi:
             gamma = floor(prob) + 1
             if xi_j > xi_k:
                 multi_coalesce(sd_j, sd_k, gamma)
             else:
                 multi_coalesce(sd_k, sd_j, gamma)
-
-            # sd_list[i] = sd_j
-            # sd_list[i + n_part/2] = sd_k
 
             if not collisions:
                 collisions = True
