@@ -1,8 +1,6 @@
 #cython: cdivision=True
 
-
-DEF PI = 3.1415926535897932384626433832
-DEF RHO_WATER = 1e3 
+include "common.pxi"
 
 cdef int superdroplet_count
 

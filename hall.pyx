@@ -9,10 +9,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-from numpy import double as np_double
-from numpy cimport double_t as np_double_t
-
-cdef inline double dmin(double a, double b): return a if a <= b else b
+include "common.pxi"
 
 effic_array = np.array(
     [0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,

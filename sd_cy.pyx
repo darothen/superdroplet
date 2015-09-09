@@ -13,6 +13,7 @@ import numpy as np
 cimport numpy as cnp
 
 from libc.stdlib cimport RAND_MAX
+cdef double RAND_FACT = float(RAND_MAX)
 
 from hall cimport hall_effic
 cimport superdroplet
@@ -26,10 +27,7 @@ cdef extern from "math.h" nogil:
 cdef extern from "stdlib.h" nogil:
     double rand()
 
-## Inline alias functions
-cdef inline double dmax(double a, double b) nogil: return a if a >= b else b
-cdef inline double dmin(double a, double b) nogil: return a if a <= b else b
-cdef inline long lmax(long a, long b) nogil: return a if a >= b else b
+include "common.pxi"
 
 ctypedef kernel_id kernel_id_t
 cpdef enum kernel_id:
@@ -37,19 +35,6 @@ cpdef enum kernel_id:
     LONG    = 2 
     HYDRO   = 3 
     HALL    = 4    
-
-# DEF KERNEL_ID = 3 # 1 = Golovin, 
-#                   # 2 = Hydro w/ E_coll=1
-#                   # 3 = Hydro w/ Long collection
-#                   # 4 = Hydro w/ Hall efficiencies (from Bott)
-DEF VERBOSITY = 1
-#: Density of water in kg/m3
-DEF RHO_WATER = 1e3 
-DEF RHO_AIR = 1.0 
-DEF THIRD = 1./3.
-DEF PI = 3.1415926535897932384626433832
-DEF MULTI_THRESH = 1e4
-cdef double RAND_FACT = float(RAND_MAX)
 
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
