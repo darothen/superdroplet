@@ -7,6 +7,8 @@ Droplet::Droplet()
 {
     _multi = 0;
     _rcubed = _solute = _density = 0.;
+
+    num_droplets++;
 }
 
 Droplet::Droplet(long multi, double rcubed, double solute,
@@ -15,10 +17,16 @@ Droplet::Droplet(long multi, double rcubed, double solute,
     _rcubed = rcubed;
     _solute = solute;
     _density = density;
+
+    num_droplets++;
+}
+
+Droplet::~Droplet() {
+    --num_droplets;
 }
 
 double Droplet::get_mass() const {
-    return _density *this->get_volume();
+    return _density * this->get_volume();
 }
 
 long Droplet::get_multi() const {
@@ -68,6 +76,8 @@ double Droplet::get_terminal_v() const {
 double Droplet::get_volume() const {
     return _rcubed *4.*M_PI/3.;
 }
+
+double Droplet::get
 
 bool operator< (const Droplet & d1, const Droplet & d2) {
     return (d1.get_multi() <= d2.get_multi());
