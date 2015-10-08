@@ -1,0 +1,1 @@
+C++ implementation of simple stochastic collision/coalescene algorithm, for testing purposes.
