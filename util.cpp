@@ -1,4 +1,5 @@
 
+#include <boost/random.hpp>
 #include <math.h>
 #include <tuple>
 
@@ -33,6 +34,14 @@ std::tuple<int, int> s_to_min_s(double seconds) {
 // Compare two droplets to see which is smaller
 bool smaller(const Droplet & d1, const Droplet & d2) {
     return (d1.get_radius() < d2.get_radius());
+}
+
+// Generate a random number b/t [0, 1]
+double urand(void) {
+    // http://www.bnikolic.co.uk/blog/cpp-boost-uniform01.html
+    boost::mt19937 rng;
+    static boost::uniform_01<boost::mt19937> zeroone(rng);
+    return zeroone();
 }
 
 double total_water(const Droplet * droplets, int n) {

@@ -34,6 +34,8 @@ Droplet::Droplet(const Droplet &d) {
 
     _volume = d._volume;
     _mass = d._mass;
+
+    num_droplets++;
 }
 
 Droplet::~Droplet() {
@@ -58,7 +60,6 @@ double Droplet::get_volume() const {
 
 double Droplet::get_terminal_v() const {
     // BEARD, 1976
-    double rcubed = _rcubed;
     double mass = this->get_mass();
 
     double r = this->get_radius();
@@ -92,6 +93,30 @@ double Droplet::get_terminal_v() const {
 
 }
 
+Droplet & Droplet::operator= (const Droplet & other) {
+    if (this == &other)
+        return *this;
+
+    _multi = other._multi;
+    _rcubed = other._rcubed;
+    _solute = other._solute;
+    _density = other._density;
+
+    _volume = other._volume;
+    _mass = other._mass;
+
+    return *this;
+}
+
 bool operator< (const Droplet & d1, const Droplet & d2) {
     return (d1._multi < d2._multi);
+}
+
+// Basic string output
+std::ostream &operator<<(std::ostream &os, const Droplet &d) {
+    os << "Droplet("
+       << "multi=" << d._multi << ", "
+       << "radius=" << d.get_radius()*1e6 << " micron"
+       << " )";
+    return os;
 }

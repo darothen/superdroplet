@@ -8,6 +8,6 @@ set(SOURCE_FILES
     droplet.hpp
     sce.cpp
     util.cpp
-    util.hpp constants.hpp)
+    util.hpp collisions.cpp collisions.hpp)
 
 add_executable(sd_cpp ${SOURCE_FILES})

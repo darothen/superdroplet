@@ -2,6 +2,8 @@
 #ifndef DROPLET_H_
 #define DROPLET_H_
 
+#include <iostream>
+
 #include "constants.hpp"
 
 using constants::RHO_WATER;
@@ -35,10 +37,9 @@ public:
     static int global_droplet_count() { return num_droplets; }
 
     // Operator overloads and friends
+    Droplet & operator= (const Droplet &);
     friend bool operator< (const Droplet & d1, const Droplet & d2);
-//    friend bool smaller(const Droplet & d1, const Droplet & d2) {
-//        return (d1._rcubed < d2._rcubed);
-//    };
+    friend std::ostream & operator<<(std::ostream & os, const Droplet & d);
 
 };
 

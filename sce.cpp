@@ -7,6 +7,7 @@
 #include "constants.hpp"
 #include "droplet.hpp"
 #include "util.hpp"
+#include "collisions.hpp"
 
 using namespace std;
 using namespace constants;
@@ -43,6 +44,7 @@ int main() {
         double x = dist(rng);
         double r = pow(x * 3. / M_PI / 4., 1. / 3.);
         droplets[i] = Droplet(xi_i, pow(r, 3.));
+        cout << droplets[i] << "\n";
     }
     sort(droplets, droplets + n_part, smaller); // Sort using a comparator function
 
@@ -79,14 +81,14 @@ int main() {
         int minutes = std::get<0>(min_sec);
         int seconds = std::get<1>(min_sec);
 
-        cout << "STEP " << ti
+        cout << "\nSTEP " << ti
              << " (" << minutes << " min";
         if (seconds > 0)
             cout << " " << seconds << " sec";
         cout << ")" << endl;
 
         // --------------------------------
-        // collision_step(droplets, t_c, delta_V);
+        collision_step(droplets, n_part, t_c, delta_V);
         // --------------------------------
 
         ti++;
