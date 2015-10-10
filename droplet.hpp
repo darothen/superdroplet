@@ -2,8 +2,11 @@
 #ifndef DROPLET_H_
 #define DROPLET_H_
 
-class Droplet
-{
+#include "constants.hpp"
+
+using constants::RHO_WATER;
+
+class Droplet {
 private:
     static int num_droplets;
     long _multi;
@@ -11,21 +14,31 @@ private:
     double _solute;
     double _density;
 
-// TODO: superdroplet_count?
+    double _mass;
+    double _volume;
 
 public:
+    // Constructors
     Droplet();
-    Droplet(long multi, double rcubed, double solute, double density=1000.0);
+    Droplet(long multi, double rcubed, double solute=0.0, double density=RHO_WATER);
+    Droplet(const Droplet &d);
     ~Droplet();
 
+    // Accessors / mutators
     double get_mass() const;
     long   get_multi() const;
     double get_radius() const;
     double get_terminal_v() const;
     double get_volume() const;
-    int global_droplet_count() const;
 
+    // Static methods
+    static int global_droplet_count() { return num_droplets; }
+
+    // Operator overloads and friends
     friend bool operator< (const Droplet & d1, const Droplet & d2);
+//    friend bool smaller(const Droplet & d1, const Droplet & d2) {
+//        return (d1._rcubed < d2._rcubed);
+//    };
 
 };
 

@@ -2,11 +2,13 @@
 #include <math.h>
 #include "droplet.hpp"
 
+int Droplet::num_droplets = 0;
 
-Droplet::Droplet()
-{
+Droplet::Droplet() {
     _multi = 0;
     _rcubed = _solute = _density = 0.;
+
+    _mass = _volume = 0.;
 
     num_droplets++;
 }
@@ -18,7 +20,20 @@ Droplet::Droplet(long multi, double rcubed, double solute,
     _solute = solute;
     _density = density;
 
+    _volume = (4.*M_PI/3.)*_rcubed;
+    _mass = _volume*_density;
+
     num_droplets++;
+}
+
+Droplet::Droplet(const Droplet &d) {
+    _multi = d._multi;
+    _rcubed = d._rcubed;
+    _solute = d._solute;
+    _density = d._density;
+
+    _volume = d._volume;
+    _mass = d._mass;
 }
 
 Droplet::~Droplet() {
@@ -26,7 +41,7 @@ Droplet::~Droplet() {
 }
 
 double Droplet::get_mass() const {
-    return _density * this->get_volume();
+    return _mass;
 }
 
 long Droplet::get_multi() const {
@@ -35,6 +50,10 @@ long Droplet::get_multi() const {
 
 double Droplet::get_radius() const {
     return pow(_rcubed, 1./3.);
+}
+
+double Droplet::get_volume() const {
+    return _volume;
 }
 
 double Droplet::get_terminal_v() const {
@@ -73,12 +92,6 @@ double Droplet::get_terminal_v() const {
 
 }
 
-double Droplet::get_volume() const {
-    return _rcubed *4.*M_PI/3.;
-}
-
-double Droplet::get
-
 bool operator< (const Droplet & d1, const Droplet & d2) {
-    return (d1.get_multi() <= d2.get_multi());
+    return (d1._multi < d2._multi);
 }
