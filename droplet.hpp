@@ -30,6 +30,7 @@ public:
     double get_mass() const;
     long   get_multi() const;
     double get_radius() const;
+    double get_solute() const;
     double get_terminal_v() const;
     double get_volume() const;
 

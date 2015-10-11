@@ -54,6 +54,10 @@ double Droplet::get_radius() const {
     return pow(_rcubed, 1./3.);
 }
 
+double Droplet::get_solute() const {
+    return _solute;
+}
+
 double Droplet::get_volume() const {
     return _volume;
 }
@@ -114,7 +118,7 @@ bool operator< (const Droplet & d1, const Droplet & d2) {
 
 // Basic string output
 std::ostream &operator<<(std::ostream &os, const Droplet &d) {
-    os << "Droplet("
+    os << "Droplet( "
        << "multi=" << d._multi << ", "
        << "radius=" << d.get_radius()*1e6 << " micron"
        << " )";

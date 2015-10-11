@@ -12,6 +12,8 @@
 using namespace std;
 using namespace constants;
 
+const bool DEBUG = true;
+
 int main() {
 
     double delta_V = 1e6; // Cell volume, m^3
@@ -74,7 +76,7 @@ int main() {
     double t = 0.;
     int ti = 0;
 
-    while (t < t_c) {
+    while (t < t_end) {
 
         // Get/print timestep info
         auto min_sec = s_to_min_s(t);
@@ -93,6 +95,8 @@ int main() {
 
         ti++;
         t = ti*t_c;
+
+        if (DEBUG) break;
     }
 
 }
