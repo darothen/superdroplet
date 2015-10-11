@@ -113,7 +113,7 @@ void collision_step(Droplet * droplets, int n_part, double t_c, double delta_V) 
         }
 
     }
-4
+
     cout << counter << " collisions simulated" << endl;
     cout << " Max/min probabilities (count): "
          << min_prob << " "

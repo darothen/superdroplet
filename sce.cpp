@@ -12,7 +12,7 @@
 using namespace std;
 using namespace constants;
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 
 int main() {
 
@@ -46,7 +46,7 @@ int main() {
         double x = dist(rng);
         double r = pow(x * 3. / M_PI / 4., 1. / 3.);
         droplets[i] = Droplet(xi_i, pow(r, 3.));
-        cout << droplets[i] << "\n";
+//        cout << droplets[i] << "\n";
     }
     sort(droplets, droplets + n_part, smaller); // Sort using a comparator function
 
@@ -95,6 +95,9 @@ int main() {
 
         ti++;
         t = ti*t_c;
+
+        cout <<  Droplet::global_droplet_count() << " droplets remain" << endl;
+
 
         if (DEBUG) break;
     }
