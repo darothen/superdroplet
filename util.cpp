@@ -1,7 +1,9 @@
 
 #include <boost/random.hpp>
 
-#include "droplet.hpp"
+#include "util.hpp"
+
+using namespace std;
 
 double exp_dist_moments(double x, double n0, double x0, double l) {
     return pow(x, l)*(n0/x0)*exp(-x/x0);
@@ -26,14 +28,14 @@ double urand(void) {
     return zeroone();
 }
 
-double total_water(const Droplet * droplets, int n) {
+double total_water(std::vector<Droplet> & droplets) {
 
     double wm0 = 0.0;
 
-    for (int i=0; i < n; i++) {
-        Droplet d = droplets[i];
+    for ( auto &d : droplets ) {
         wm0 += d._mass*d._multi/1e3;
     }
+
     return wm0;
 }
 

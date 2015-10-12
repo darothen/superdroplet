@@ -1,7 +1,6 @@
 
 #include <math.h>
 
-#include "constants.hpp"
 #include "droplet.hpp"
 
 int Droplet::num_droplets = 0;

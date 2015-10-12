@@ -1,5 +1,9 @@
 
+#include <boost/format.hpp>
 #include <boost/random.hpp>
+#include <fstream>
+#include <iostream>
+#include <vector>
 #include <math.h>
 
 #include "constants.hpp"
@@ -9,6 +13,8 @@
 
 using namespace std;
 using namespace constants;
+using std::string;
+using boost::format;
 
 const bool DEBUG = false;
 
@@ -30,7 +36,7 @@ int main() {
     /* ************************************************ */
 
     // Create a droplet array
-    Droplet droplets[n_part];
+    std::vector<Droplet> droplets;
 
     // Pre-compute the super-droplet multiplicity
     double total_droplets = delta_V * n_0;
@@ -43,10 +49,10 @@ int main() {
     for (int i = 0; i < n_part; i++) {
         double x = dist(rng);
         double r = pow(x * 3. / M_PI / 4., 1. / 3.);
-        droplets[i] = Droplet(xi_i, pow(r, 3.));
+        droplets.push_back(Droplet(xi_i, pow(r, 3.)));
 //        cout << droplets[i] << "\n";
     }
-    sort(droplets, droplets + n_part, smaller); // Sort using a comparator function
+    std::sort(droplets.begin(), droplets.end(), smaller); // Sort using a comparator function
 
     cout << "GRID SETUP" << endl;
     cout << "   radii: " << droplets[0]._radius << " - "
@@ -68,7 +74,7 @@ int main() {
 
     cout << "\nBEGINNING MAIN ROUTINE\n" << endl;
 
-    double wm0 = total_water(droplets, n_part);
+    double wm0 = total_water(droplets);
     cout << "Initial water mass = " << wm0 << " kg" << endl;
 
     double t = 0.;
@@ -87,16 +93,27 @@ int main() {
             cout << " " << seconds << " sec";
         cout << ")" << endl;
 
+        if ( (floor(t/plot_dt) == (t/plot_dt)) || (ti == 0) ) {
+            cout << endl << "Writing output... ";
+            string out_fn = str(format("%5.1fn_output.txt") % t);
+            cout << "(" << out_fn << ")" << endl;
+            std::ofstream out_file(out_fn);
+            for (Droplet &d : droplets) {
+                out_file << d._rcubed << "," << d._multi << endl;
+            }
+
+            cout << " done." << endl;
+        }
+
         // --------------------------------
-        collision_step(droplets, n_part, t_c, delta_V);
+        collision_step(droplets, t_c, delta_V);
         // --------------------------------
 
         ti++;
-        t = ti*t_c;
+        t = (int) ti*t_c;
 
         cout <<  Droplet::global_droplet_count() << " droplets remain" << endl;
 
         if (DEBUG) break;
     }
-
 }

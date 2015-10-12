@@ -2,6 +2,7 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
+#include <vector>
 #include <math.h>
 
 #include "droplet.hpp"
@@ -15,6 +16,7 @@ double exp_dist_moments(double x, double n0, double x0, double l=0.);
 std::tuple<int, int> s_to_min_s(double seconds);
 bool smaller(const Droplet &, const Droplet &);
 double urand(void);
-double total_water(const Droplet *, int);
+
+double total_water(std::vector<Droplet> &);
 
 #endif

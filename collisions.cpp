@@ -8,12 +8,11 @@
 
 using namespace std;
 
-const double golovin_b = 1.5e3;
 
 inline double kernel(const Droplet &sd_j, const Droplet &sd_k) {
     // TODO: implement alternative collision kernels
-    return golovin_b*(pow(sd_j._radius, 3.) +
-                      pow(sd_k._radius, 3.))*4.*M_PI/3.;
+    const double golovin_b = 1.5e3;
+    return golovin_b*(sd_j._rcubed + sd_k._rcubed)*4.*M_PI/3.;
 }
 
 void multi_coalesce(Droplet &sd_j, Droplet &sd_k, double gamma) {
@@ -60,24 +59,25 @@ void multi_coalesce(Droplet &sd_j, Droplet &sd_k, double gamma) {
 //    cout << "<<<" << endl;
 }
 
-void collision_step(Droplet * droplets, int n_part, double t_c, double delta_V) {
+void collision_step(std::vector<Droplet> & droplets, double t_c, double delta_V) {
 
     cout << "PREP STEPS" << endl;
 
     // 1) Make the random permutation of the droplet list
     cout << "   SHUFFLE LIST" << endl;
-    random_shuffle(droplets, droplets+n_part);
+    random_shuffle(droplets.begin(), droplets.end());
 
     // 2) Make the candidate pairs
     cout << "   GEN PAIRS" << endl;
 
     // 3) Generate the uniform random numbers
     cout << "PROBABILITY LOOP" << endl;
+    long n_part = droplets.size();
     double scaling = (n_part*(n_part-1)/2.)/floor(n_part/2.);
 
     cout << "PROB / COLLISION LOOP" << endl;
     unsigned int counter = 0;
-    int half_n_part = n_part/2;
+    long half_n_part = n_part/2;
 
     unsigned int big_probs = 0;
     double max_prob = 0., min_prob = 1.0;
@@ -87,6 +87,7 @@ void collision_step(Droplet * droplets, int n_part, double t_c, double delta_V) 
         Droplet & sd_k = droplets[i + half_n_part];
 
         double phi = urand();
+
         double K_ij = kernel(sd_j, sd_k);
         long max_xi = max(sd_j._multi, sd_k._multi);
 
