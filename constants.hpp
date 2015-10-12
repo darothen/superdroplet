@@ -12,6 +12,7 @@ namespace constants {
     };
 
     const double RHO_WATER = 1000.; // kg/m^3
+    const double third = 1./3.;
 }
 
 #endif //SD_CPP_CONSTANTS_HPP

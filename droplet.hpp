@@ -8,18 +8,15 @@
 
 using constants::RHO_WATER;
 
-class Droplet {
+struct Droplet {
 private:
     static int num_droplets;
-    long _multi;
-    double _rcubed;
-    double _solute;
-    double _density;
-
-    double _mass;
-    double _volume;
 
 public:
+    long _multi;
+    double _rcubed, _solute, _density;
+    double _radius, _volume, _mass;
+
     // Constructors
     Droplet();
     Droplet(long multi, double rcubed, double solute=0.0, double density=RHO_WATER);
@@ -27,12 +24,12 @@ public:
     ~Droplet();
 
     // Accessors / mutators
-    double get_mass() const;
-    long   get_multi() const;
-    double get_radius() const;
-    double get_solute() const;
+//    double get_mass() const;
+//    long   get_multi() const;
+//    double get_radius() const;
+//    double get_solute() const;
     double get_terminal_v() const;
-    double get_volume() const;
+//    double get_volume() const;
 
     // Static methods
     static int global_droplet_count() { return num_droplets; }

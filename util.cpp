@@ -1,7 +1,5 @@
 
 #include <boost/random.hpp>
-#include <math.h>
-#include <tuple>
 
 #include "droplet.hpp"
 
@@ -17,7 +15,7 @@ std::tuple<int, int> s_to_min_s(double seconds) {
 
 // Compare two droplets to see which is smaller
 bool smaller(const Droplet & d1, const Droplet & d2) {
-    return (d1.get_radius() < d2.get_radius());
+    return (d1._radius < d2._radius);
 }
 
 // Generate a random number b/t [0, 1]
@@ -34,7 +32,7 @@ double total_water(const Droplet * droplets, int n) {
 
     for (int i=0; i < n; i++) {
         Droplet d = droplets[i];
-        wm0 += d.get_mass()*d.get_multi()/1e3;
+        wm0 += d._mass*d._multi/1e3;
     }
     return wm0;
 }

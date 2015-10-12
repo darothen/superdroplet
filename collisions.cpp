@@ -4,26 +4,25 @@
 #include <math.h>
 
 #include "collisions.hpp"
-#include "droplet.hpp"
 #include "util.hpp"
 
 using namespace std;
 
 const double golovin_b = 1.5e3;
 
-double kernel(const Droplet &sd_j, const Droplet &sd_k) {
+inline double kernel(const Droplet &sd_j, const Droplet &sd_k) {
     // TODO: implement alternative collision kernels
-    return golovin_b*(pow(sd_j.get_radius(), 3.) +
-                      pow(sd_k.get_radius(), 3.))*4.*M_PI/3.;
+    return golovin_b*(pow(sd_j._radius, 3.) +
+                      pow(sd_k._radius, 3.))*4.*M_PI/3.;
 }
 
 void multi_coalesce(Droplet &sd_j, Droplet &sd_k, double gamma) {
 //    cout << ">>>" << endl;
 //    cout << gamma << " " << sd_j << " " << sd_k << endl;
 
-    double gamma_tilde = dmin(gamma, (double) floor(sd_j.get_multi() / sd_k.get_multi()));
+    double gamma_tilde = dmin(gamma, (double) floor(sd_j._multi / sd_k._multi));
 
-    long excess = sd_j.get_multi() - (long) floor(gamma_tilde*sd_k.get_multi());
+    long excess = sd_j._multi - (long) floor(gamma_tilde*sd_k._multi);
 //    cout << "Excess = " << excess << endl;
 
     long multi_j_p, multi_k_p;
@@ -32,25 +31,25 @@ void multi_coalesce(Droplet &sd_j, Droplet &sd_k, double gamma) {
 
     if (excess > 0) {
         multi_j_p = excess;
-        multi_k_p = sd_k.get_multi();
+        multi_k_p = sd_k._multi;
 
-        rcubed_j_p = pow(sd_j.get_radius(), 3.);
-        rcubed_k_p = gamma_tilde*rcubed_j_p + pow(sd_k.get_radius(), 3.);
+        rcubed_j_p =sd_j._rcubed;
+        rcubed_k_p = gamma_tilde*rcubed_j_p + sd_k._rcubed;
 
-        solute_j_p = sd_j.get_solute();
-        solute_k_p = gamma_tilde*solute_j_p + sd_k.get_solute();
+        solute_j_p = sd_j._solute;
+        solute_k_p = gamma_tilde*solute_j_p + sd_k._solute;
 
         sd_j = Droplet(multi_j_p, rcubed_j_p, solute_j_p);
         sd_k = Droplet(multi_k_p, rcubed_k_p, solute_k_p);
     } else {
-        multi_j_p = (long) floor(sd_k.get_multi() / 2);
-        multi_k_p = sd_k.get_multi() - multi_j_p;
+        multi_j_p = (long) floor(sd_k._multi / 2);
+        multi_k_p = sd_k._multi - multi_j_p;
 
         rcubed_j_p = rcubed_k_p =
-            gamma_tilde*pow(sd_j.get_radius(), 3.) + pow(sd_k.get_radius(), 3.);
+            gamma_tilde*sd_j._rcubed + sd_k._rcubed;
 
         solute_j_p = solute_k_p =
-            gamma_tilde*sd_j.get_solute() + sd_k.get_solute();
+            gamma_tilde*sd_j._solute + sd_k._solute;
 
         sd_j = Droplet(multi_k_p, rcubed_j_p, solute_j_p);
         sd_k = Droplet(multi_j_p, rcubed_k_p, solute_k_p);
@@ -89,7 +88,7 @@ void collision_step(Droplet * droplets, int n_part, double t_c, double delta_V) 
 
         double phi = urand();
         double K_ij = kernel(sd_j, sd_k);
-        long max_xi = max(sd_j.get_multi(), sd_k.get_multi());
+        long max_xi = max(sd_j._multi, sd_k._multi);
 
         double prob = scaling*max_xi*(t_c/delta_V)*K_ij;
 

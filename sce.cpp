@@ -1,7 +1,5 @@
 
 #include <boost/random.hpp>
-#include <algorithm>
-#include <iostream>
 #include <math.h>
 
 #include "constants.hpp"
@@ -18,7 +16,7 @@ int main() {
 
     double delta_V = 1e6; // Cell volume, m^3
     double t_c = 1.0; // timestep, seconds
-    const resolution n_part = lo;
+    const resolution n_part = med_lo;
 
     // CASE SETTINGS
     int t_end = 3601;
@@ -51,12 +49,12 @@ int main() {
     sort(droplets, droplets + n_part, smaller); // Sort using a comparator function
 
     cout << "GRID SETUP" << endl;
-    cout << "   radii: " << droplets[0].get_radius() << " - "
-    << droplets[n_part - 1].get_radius() << " m" << endl;
-    cout << "  volume: " << droplets[0].get_volume() << " - "
-    << droplets[n_part - 1].get_volume() << " m^3" << endl;
-    cout << "    mass: " << droplets[0].get_mass() << " - "
-    << droplets[n_part - 1].get_mass() << " kg" << endl;
+    cout << "   radii: " << droplets[0]._radius << " - "
+    << droplets[n_part - 1]._radius << " m" << endl;
+    cout << "  volume: " << droplets[0]._volume << " - "
+    << droplets[n_part - 1]._volume << " m^3" << endl;
+    cout << "    mass: " << droplets[0]._mass << " - "
+    << droplets[n_part - 1]._mass << " kg" << endl;
 
     cout << "SD SETUP" << endl;
     cout << "   N_s: " << n_part << endl;
@@ -97,7 +95,6 @@ int main() {
         t = ti*t_c;
 
         cout <<  Droplet::global_droplet_count() << " droplets remain" << endl;
-
 
         if (DEBUG) break;
     }
