@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+BUILD_DIR="build/"
+
+if [ -d "$BUILD_DIR" ]; then
+    echo "Re-making build dir at $BUILD_DIR"
+    rm -rf "$BUILD_DIR"
+    mkdir "$BUILD_DIR"
+fi
+
+cd "$BUILD_DIR"
+FC=gfortran-5 cmake ..
+make
+
+cd ..
