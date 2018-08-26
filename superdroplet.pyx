@@ -16,16 +16,16 @@ cdef class Superdroplet:
         self.density = RHO_WATER # kg/m3
         self.id = superdroplet_count
 
-    cdef void set_properties(Superdroplet self, 
-                             long multi, 
-                             double rcubed, 
+    cdef void set_properties(Superdroplet self,
+                             long multi,
+                             double rcubed,
                              double solute) nogil:
         self.multi = multi
         self.rcubed = rcubed
         self.solute = solute
 
     property terminal_v:
-        def __get__(self):      
+        def __get__(self):
             return self.calc_terminal_v()
     cdef double calc_terminal_v(self) nogil:
         ## BEARD, 1976
@@ -33,7 +33,7 @@ cdef class Superdroplet:
 
         r = self.rcubed**(1./3.)
         d = 2.*r*1e6 # diameter, m -> micron
-        x = self.calc_mass() * 1e3 # convert kg -> g 
+        x = self.calc_mass() * 1e3 # convert kg -> g
 
         if d <= 134.43:
             alpha = 4.5795e5

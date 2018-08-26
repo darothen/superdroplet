@@ -21,7 +21,7 @@ def s_to_min_s(seconds):
     return minutes, seconds
 
 def fmt_time(minutes, seconds, minutes_only=False):
-    """ Yield a print-suitable format for the time in minutes and 
+    """ Yield a print-suitable format for the time in minutes and
     seconds. """
 
     minutes_str = "{minutes:>4d} min".format(minutes=int(minutes))
@@ -43,7 +43,7 @@ def estimate_n0(R_0, L):
     m_lo, m_hi = (4.*np.pi/3.)*(np.array([r_lo, r_hi])**3)*RHO_WATER
 
     # Objective function minimize - total liquid water content given n_0
-    f = lambda n_0: quad(exp_dist_moments, m_lo, m_hi, 
+    f = lambda n_0: quad(exp_dist_moments, m_lo, m_hi,
                          args=(n_0, M_0, 1.))[0]*1e3 # kg/m3 -> g/m3
     g = lambda n_0: f(n_0) - L
     n_opt = brentq(g, 2**20, 5e9, xtol=1e-1, maxiter=1000)

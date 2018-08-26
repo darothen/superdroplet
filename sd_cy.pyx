@@ -31,10 +31,10 @@ include "common.pxi"
 
 ctypedef kernel_id kernel_id_t
 cpdef enum kernel_id:
-    GOLOVIN = 1 
-    LONG    = 2 
-    HYDRO   = 3 
-    HALL    = 4    
+    GOLOVIN = 1
+    LONG    = 2
+    HYDRO   = 3
+    HALL    = 4
 
 cdef int sd_compare(Superdroplet_t a, Superdroplet_t b):
     return a.multi - b.multi
@@ -57,9 +57,9 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
     x_j = sd_j.calc_mass()
     x_k = sd_k.calc_mass()
 
-    tv_j = sd_j.calc_terminal_v() 
+    tv_j = sd_j.calc_terminal_v()
     tv_k = sd_k.calc_terminal_v()
-    
+
     tv_diff = tv_j - tv_k
     r_sum = r_j + r_k
 
@@ -77,7 +77,7 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
         if r_large >= 50.0: # microns
             E_coll = 1.0
         else:
-            ## Simmel et al, 2002 # REMOVE MICRON CONVERSION! 
+            ## Simmel et al, 2002 # REMOVE MICRON CONVERSION!
             # E_coll = dmax(4.5e4 * (r_large*r_large*1e4) * \
             #               (1. - 3e-4/(r_small*1e2)),
             #               1e-3 )
@@ -92,7 +92,7 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
 
         E_coll = hall_effic(r_large, r_small)
 
-    else: 
+    else:
         E_coll = 1.0
 
     # Limit collection efficiency to 0 <= E_coll <= 1.0
@@ -101,8 +101,8 @@ cdef double kernel(Superdroplet_t sd_j, Superdroplet_t sd_k,
 
     return (E_coll*E_coal)*PI*(r_sum*r_sum)*fabs(tv_diff)
 
-cdef void multi_coalesce(Superdroplet_t sd_j, 
-                         Superdroplet_t sd_k, 
+cdef void multi_coalesce(Superdroplet_t sd_j,
+                         Superdroplet_t sd_k,
                          double gamma) nogil:
     """
     Coalesce two superdroplets with one another. Assume
@@ -119,7 +119,7 @@ cdef void multi_coalesce(Superdroplet_t sd_j,
 
     if excess > 0:
 
-        multi_j_p = excess 
+        multi_j_p = excess
         multi_k_p = sd_k.multi
 
         rcubed_j_p = sd_j.rcubed
@@ -146,9 +146,9 @@ cdef void multi_coalesce(Superdroplet_t sd_j,
         sd_k.set_properties(multi_j_p, rcubed_k_p, solute_k_p)
 
 def recycle(list sds):
-    """ For a list of superdroplets, identify which ones have 0 
-    multiplicities; for each *i* of these, pick the superdroplet 
-    with the *i*th-most multiplicity, split it in half, and copy 
+    """ For a list of superdroplets, identify which ones have 0
+    multiplicities; for each *i* of these, pick the superdroplet
+    with the *i*th-most multiplicity, split it in half, and copy
     the properties to the remaining superdroplet. """
 
     print "RECYCLE"
@@ -182,7 +182,7 @@ def recycle(list sds):
 
     return sds
 
-def step(list sd_list, 
+def step(list sd_list,
          double t_c, double delta_V, kernel_id kern):
 
     print "PREP STEPS"
