@@ -1,6 +1,6 @@
 module math
 
-    use common, only: rkind, ikind, RHO_WATER
+    use constants
     implicit none
 
 contains

@@ -1,13 +1,13 @@
 module droplet_class
 
-    use common, only: rkind, ikind, lkind, RHO_WATER, PI, THIRD
+    use constants
     implicit none
     private
 
     public :: droplet  ! droplet type
     public :: droplet_ ! droplet constructor bound to init_droplet
 
-    integer(kind=lkind), public :: droplet_count = 0
+    integer(kind=ikind), public :: droplet_count = 0
 
     type :: droplet
         integer(kind=lkind) :: multi
@@ -18,8 +18,8 @@ module droplet_class
         real(kind=rkind)    :: radius, volume, mass
         integer(kind=lkind) :: id
     contains
-        procedure :: set_droplet
-        procedure :: terminal_v=>calc_terminal_v
+        procedure, public :: set_droplet
+        procedure, public :: terminal_v=>calc_terminal_v
     end type droplet
 
     interface droplet_
@@ -55,7 +55,7 @@ contains
         init_droplet%volume = rcubed * 4. / PI / 3.
         init_droplet%mass   = init_droplet%volume * init_droplet%density
 
-        droplet_count = droplet_count + 1
+        droplet_count = droplet_count + 1_ikind
         init_droplet%id = droplet_count
 
     end function init_droplet

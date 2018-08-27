@@ -1,0 +1,10 @@
+# Builds / exectuables
+bld/*
+sce
+*.so
+
+# Outputs files
+*.txt
+
+# Miscellaneous
+*~
