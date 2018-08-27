@@ -5,12 +5,8 @@ import numpy as np
 
 Rs = np.logspace(0., np.log10(5e3), 250)
 
-try:
-    from utils import RHO_WATER
-except ImportError:
-    RHO_WATER = 1e3
+RHO_WATER = 1e3
 
-# @jit("f8[:](f8[:],f8[:],f8[:],f8,f8)")
 @jit
 def gtilde_jit(R, r_grid, xi, sigma, delta_V=1e6):
     nr = len(R)
