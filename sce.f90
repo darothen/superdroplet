@@ -1,4 +1,7 @@
-
+! ---------------------------------------------------------------
+! Main stochastic collision/coalescence program, using the
+! superdroplet method of Shima et al (2009)
+! ---------------------------------------------------------------
 program sce
 
     use collisions, only: collision_step
@@ -36,7 +39,6 @@ program sce
         plot_dt = 1200
 
     ! -- Nothing needs to be configured past here
-
     type(droplet), dimension(n_part) :: droplets
     real(kind=rkind), dimension(n_part) :: x_grid, r_grid, m_grid
 

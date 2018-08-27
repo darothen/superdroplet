@@ -5,6 +5,7 @@ sce
 
 # Outputs files
 *.txt
+*.tar.gz
 
 # Miscellaneous
 *~
