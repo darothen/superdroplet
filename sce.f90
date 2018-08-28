@@ -4,7 +4,7 @@
 ! ---------------------------------------------------------------
 program sce
 
-    use collisions, only: collision_step
+    use collisions, only: collision_step, kernels, GOLOVIN, HYDRO, LONG, HALL
     use constants
     use droplet_class, only: droplet, droplet_, droplet_count
     use util
@@ -37,6 +37,10 @@ program sce
         t_end = 3601,                 &
         ! Output interval time (seconds)
         plot_dt = 1200
+
+    integer(kind(kernels)), parameter :: &
+        ! Collision kernel enumeration
+        kern = HYDRO
 
     ! -- Nothing needs to be configured past here
     type(droplet), dimension(n_part) :: droplets
@@ -136,7 +140,7 @@ program sce
             call output_droplets(droplets, t)
 
         ! -------------------------------------------------------------
-        call collision_step(droplets, t_c, delta_v)
+        call collision_step(droplets, t_c, delta_v, kern)
         ! -------------------------------------------------------------
 
         ti = ti + 1
