@@ -70,7 +70,7 @@ program sce
     xi_i = floor(total_droplets / n_part, lkind)
 
     ! Call the random number generator to compute masses.
-    do i = 1, n_part
+    sample_loop : do i = 1, n_part
         ! The exponential dist is of the form
         !             1
         ! p(x) dx = ---- exp ( -x / mu ) dx
@@ -80,7 +80,7 @@ program sce
         phi = fgsl_ran_exponential(rng, X_0) ! phi is a sample from the mass
                                              ! distribution
         x_grid(i) = phi
-    end do
+    end do sample_loop
 
     ! Pre-sort the x_grid because it's a bit easier to sort doubles
     ! with FGSL than objects
@@ -90,10 +90,10 @@ program sce
     r_grid = (x_grid * 3. / PI / 4.)**THIRD
 
     ! Populate the initial droplet array
-    do i = 1, n_part
+    populate_loop : do i = 1, n_part
         droplets(i) = droplet_(xi_i, r_grid(i)**3.)
         m_grid(i) = x_grid(i) * droplets(i)%density
-    end do
+    end do populate_loop
 
     write (*,*) "GRID SETUP"
     write (*,*) "   radii: ", droplets(1)%radius, " - ", &
