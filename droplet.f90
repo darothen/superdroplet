@@ -75,23 +75,24 @@ contains
     end subroutine set_droplet
 
     function calc_terminal_v(self) result(terminal_v)
+        ! Beard (1976)
         class(droplet), intent(in) :: self
         real(kind=rkind) :: terminal_v
 
         real(kind=rkind) :: alpha, r, d, x, x_to_beta
         r = self%radius
-        d = 2.*r*1e6 ! diameter, m-> micron
-        x = self%mass() * 1e3 ! mass, kg -> g
+        d = 2.*r*1d6 ! diameter, m-> micron
+        x = self%mass() * 1d3 ! mass, kg -> g
 
         if ( d <= 134.43 ) then
-            alpha = 4.5795e5
-            x_to_beta = x**(2*THIRD)
+            alpha = 4.5795d5
+            x_to_beta = x**(2d0*THIRD)
         else if ( (134.43 < d) .and. (d <= 1511.64) ) then
             alpha = 4962.0
             x_to_beta = x**(THIRD)
         else if ( (1511.64 < d) .and. (d <= 3477.84) ) then
             alpha = 1732.0
-            x_to_beta = x**(THIRD/2)
+            x_to_beta = x**(THIRD/2d0)
         else
             alpha = 917.0
             x_to_beta = 1.0

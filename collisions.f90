@@ -24,14 +24,8 @@ contains
         real(kind=rkind), intent(in) :: &
         E_coal, E_coll, r_sum, tv_diff
 
-        real(kind=rkind) :: E_coll_clip
-
-        ! Limit collection efficiency to 0 <= E_coll <= 1.0
-        E_coll_clip = min(E_coll, 1d0)
-        E_coll_clip = max(0d0, E_coll_clip)
-
         calc_hydro_kernel = &
-            (E_coal*E_coll_clip)*PI*(r_sum*r_sum)*abs(tv_diff)
+            (E_coal*E_coll)*PI*(r_sum*r_sum)*abs(tv_diff)
 
     end function calc_hydro_kernel
 
@@ -63,6 +57,8 @@ contains
         r_sum = r_j + r_k
 
         hydro_kernel = calc_hydro_kernel(1d0, 1d0, r_sum, tv_diff)
+
+        ! write (*,*) r_j, r_k, tv_j, tv_k
 
     end function hydro_kernel
 
@@ -97,6 +93,10 @@ contains
                    * (1d0 - 3d0/(max(3d0, r_small) + 1d-2))
         end if
 
+        ! Limit collection efficiency to 0 <= E_coll <= 1.0
+        E_coll = min(E_coll, 1d0)
+        E_coll = max(0d0, E_coll)
+
         long_kernel = calc_hydro_kernel(1d0, E_coll, r_sum, tv_diff)
 
     end function long_kernel
@@ -112,8 +112,8 @@ contains
 
         mjp = real(sd_j%multi, kind=rkind)
         mkp = real(sd_k%multi, kind=rkind)
-        gamma_tilde = min(gamma, real(floor(mjp/mkp), kind=rkind))
-        excess = sd_j%multi - floor(gamma_tilde*sd_k%multi, &
+        gamma_tilde = min(gamma, real(nint(mjp/mkp,kind=lkind), kind=rkind))
+        excess = sd_j%multi - nint(gamma_tilde*sd_k%multi, &
                                     kind=lkind)
 
         if ( excess > 0 ) then
@@ -126,10 +126,13 @@ contains
             solute_j_p = sd_j%solute
             solute_k_p = gamma_tilde*solute_j_p + sd_k%solute
 
+            ! write (*,*) ">0m", multi_j_p, multi_k_p, multi_j_p + multi_k_p
+            ! write (*,*) ">0r", rcubed_j_p, rcubed_k_p
+
             call sd_j%set_droplet(multi_j_p, rcubed_j_p, solute_j_p)
             call sd_k%set_droplet(multi_k_p, rcubed_k_p, solute_k_p)
         else
-            multi_j_p = floor(sd_k%multi / 2.)
+            multi_j_p = nint(sd_k%multi / 2d0, kind=lkind)
             multi_k_p = sd_k%multi - multi_j_p
 
             rcubed_j_p = gamma_tilde*sd_j%rcubed + sd_k%rcubed
@@ -137,6 +140,9 @@ contains
 
             solute_j_p = gamma_tilde*sd_j%solute + sd_k%solute
             solute_k_p = solute_j_p
+
+            ! write (*,*) "<0m", sd_k%multi/2d0, multi_j_p, multi_k_p, multi_j_p + multi_k_p
+            ! write (*,*) "<0r", rcubed_j_p, rcubed_k_p
 
             call sd_j%set_droplet(multi_k_p, rcubed_j_p, solute_j_p)
             call sd_k%set_droplet(multi_j_p, rcubed_k_p, solute_k_p)
@@ -183,6 +189,13 @@ contains
 
             sd_j = droplets(i)
             sd_k = droplets(i + half_n_part)
+
+            ! Check for NaN in droplet sizes
+            if ( (sd_j%radius /= sd_j%radius) .or. &
+                 (sd_k%radius /= sd_k%radius) ) then
+                 write (*, *) sd_j%radius, sd_k%radius
+                stop "WARNING: encountered NaN in superdroplet radius"
+            end if
 
             phi = urand()
 

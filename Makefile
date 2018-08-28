@@ -1,3 +1,7 @@
+
+all: sce
+	./sce
+
 sce: $(wildcard *.f90)
 	./quick
 

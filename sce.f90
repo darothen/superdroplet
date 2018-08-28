@@ -18,9 +18,11 @@ program sce
     !! Configuration parameters for the initial droplet size distribution
     real(kind=rkind), parameter ::    &
         ! Total number concentration
-        n_0 = 2.**23,                 &
+        ! n_0 = 2.**23,                 &
+        n_0 = 27d0*(2d0**23),         &
         ! Total droplet radius
-        R_0 = 30.531d-6,              &
+        ! R_0 = 30.531d-6,              &
+        R_0 = 30.531e-6/3d0,              &
         ! Total droplet volume
         X_0 = (4.*PI/3.)*(R_0**3.),   &
         ! Total droplet water mass
@@ -29,10 +31,11 @@ program sce
         delta_V = 1e6,                &
         ! Model timestep (seconds)
         t_c = 1.0
+        ! t_c = 0.1
 
     integer(kind=ikind), parameter :: &
         ! Total number of superdroplets
-        n_part = 2**13,               &
+        n_part = 2**17,               &
         ! Total simulation time (seconds)
         t_end = 3601,                 &
         ! Output interval time (seconds)
