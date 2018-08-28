@@ -98,10 +98,10 @@ program sce
     write (*,*) "GRID SETUP"
     write (*,*) "   radii: ", droplets(1)%radius, " - ", &
                            droplets(n_part-1)%radius, " m"
-    write (*,*) "  volume: ", droplets(1)%volume, " - ", &
-                           droplets(n_part-1)%volume, " m^3"
-    write (*,*) "    mass: ", droplets(1)%mass, " - ", &
-                           droplets(n_part-1)%mass, " kg"
+    write (*,*) "  volume: ", droplets(1)%volume(), " - ", &
+                           droplets(n_part-1)%volume(), " m^3"
+    write (*,*) "    mass: ", droplets(1)%mass(), " - ", &
+                           droplets(n_part-1)%mass(), " kg"
 
     write (*,*) "SD SETUP"
     write (*,*) "   N_s: ", n_part

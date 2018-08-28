@@ -15,11 +15,13 @@ module droplet_class
         real(kind=rkind)    :: solute
         real(kind=rkind)    :: density
 
-        real(kind=rkind)    :: radius, volume, mass
+        real(kind=rkind)    :: radius
         integer(kind=lkind) :: id
     contains
         procedure, public :: set_droplet
         procedure, public :: terminal_v=>calc_terminal_v
+        procedure, public :: volume=>calc_volume
+        procedure, public :: mass=>calc_mass
     end type droplet
 
     interface droplet_
@@ -52,9 +54,6 @@ contains
         endif
 
         init_droplet%radius = rcubed**(THIRD)
-        init_droplet%volume = rcubed * 4. / PI / 3.
-        init_droplet%mass   = init_droplet%volume * init_droplet%density
-
         droplet_count = droplet_count + 1_ikind
         init_droplet%id = droplet_count
 
@@ -82,7 +81,7 @@ contains
         real(kind=rkind) :: alpha, r, d, x, x_to_beta
         r = self%radius
         d = 2.*r*1e6 ! diameter, m-> micron
-        x = self%mass * 1e3 ! mass, kg -> g
+        x = self%mass() * 1e3 ! mass, kg -> g
 
         if ( d <= 134.43 ) then
             alpha = 4.5795e5
@@ -101,5 +100,24 @@ contains
         terminal_v = 1e-2 * alpha * x_to_beta ! cm/s -> m/s
 
     end function calc_terminal_v
+
+
+    function calc_volume(self) result(volume)
+        class(droplet), intent(in) :: self
+        real(kind=rkind) :: volume
+
+        volume = self%rcubed*4d0*PI*THIRD
+
+    end function calc_volume
+
+
+    function calc_mass(self) result(mass)
+        class(droplet), intent(in) :: self
+        real(kind=rkind) :: mass
+
+        mass = self%density*self%volume()
+
+    end function calc_mass
+
 
 end module

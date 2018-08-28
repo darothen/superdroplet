@@ -59,7 +59,7 @@ contains
         n_droplets = size(droplets, kind=ikind)
 
         do i = 1, n_droplets
-            droplet_water = droplets(i)%mass * droplets(i)%multi / 1d3
+            droplet_water = droplets(i)%mass() * droplets(i)%multi / 1d3
             total_water = total_water + droplet_water
         end do
 
