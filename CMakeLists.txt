@@ -15,4 +15,7 @@ set(SOURCE_FILES
     util.cpp
     util.hpp collisions.cpp collisions.hpp)
 
-add_executable(sd_cpp ${SOURCE_FILES})
+find_package( Boost COMPONENTS format random )
+include_directories( ${Boost_INCLUDE_DIRS} )
+
+add_executable(sce ${SOURCE_FILES})

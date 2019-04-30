@@ -1,0 +1,12 @@
+# Build files
+*.so
+*.pyc
+
+# IDE stuff
+__pycache__
+.idea
+bld/
+
+# Model outputs
+*.txt
+cmake_install.cmake
