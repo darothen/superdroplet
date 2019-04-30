@@ -35,7 +35,7 @@ program sce
 
     integer(kind=ikind), parameter :: &
         ! Total number of superdroplets
-        n_part = 2**17,               &
+        n_part = 2**13,               &
         ! Total simulation time (seconds)
         t_end = 3601,                 &
         ! Output interval time (seconds)
@@ -43,7 +43,7 @@ program sce
 
     integer(kind(kernels)), parameter :: &
         ! Collision kernel enumeration
-        kern = HYDRO
+        kern = GOLOVIN
 
     ! -- Nothing needs to be configured past here
     type(droplet), dimension(n_part) :: droplets

@@ -12,4 +12,4 @@ clean:
 	rm sce
 	rm -rf bld/
 	rm sd_fortran.tar.gz
-	*.txt
+	rm *.txt

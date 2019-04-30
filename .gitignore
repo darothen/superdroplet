@@ -2,10 +2,12 @@
 bld/*
 sce
 *.so
+__pycache__
 
 # Outputs files
 *.txt
 *.tar.gz
+*log
 
 # Miscellaneous
 *~

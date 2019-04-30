@@ -54,7 +54,6 @@ def kde_plot(sds_list=None, r_grid=None, xi=None, delta_V=1e6):
     sigma = sigma_0*(len(r_grid)**(-1./5.))
 
     xx = Rs
-    print(len(Rs), len(r_grid), len(xi))
     yy = gtilde_jit(Rs*1e-6, r_grid, xi, sigma, delta_V) * 1e3 # g m^-3
 
     return xx, yy
