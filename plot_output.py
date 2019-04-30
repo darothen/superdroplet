@@ -12,12 +12,12 @@ from superdroplet import Superdroplet
 
 import matplotlib.pyplot as plt
 
-OUT_DIR = "bld"
+OUT_DIR = ""
 
 if __name__ == "__main__":
 
-    out_files = glob.glob(os.path.join(OUT_DIR,
-                                       "*output.txt"))
+    out_files = glob.glob(os.path.join(OUT_DIR, "*output.txt"))
+    print(out_files)
 
     fig = plt.figure(1)
     ax = fig.add_subplot(111)
@@ -37,3 +37,5 @@ if __name__ == "__main__":
         xx, yy = kde_plot(sds)
         ax.plot(xx, yy, lw=2.5)
         plt.draw()
+
+    plt.show()

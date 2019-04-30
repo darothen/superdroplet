@@ -14,6 +14,7 @@ inline int ifloor(long i) { return (int) floor(i); };
 
 double exp_dist_moments(double x, double n0, double x0, double l=0.);
 std::tuple<int, int> s_to_min_s(double seconds);
+// TODO: seconds in time tuple should be a "real"
 bool smaller(const Droplet &, const Droplet &);
 double urand(void);
 

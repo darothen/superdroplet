@@ -22,7 +22,7 @@ int main() {
 
     double delta_V = 1e6; // Cell volume, m^3
     double t_c = 1.0; // timestep, seconds
-    const resolution n_part = med_lo;
+    const resolution n_part = med_lo; // lo (2^11), med_lo (2^13), med_hi (2^15), hi (2^17)
 
     // CASE SETTINGS
     int t_end = 3601;

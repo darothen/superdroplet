@@ -32,12 +32,14 @@ void multi_coalesce(Droplet &sd_j, Droplet &sd_k, double gamma) {
         multi_j_p = excess;
         multi_k_p = sd_k._multi;
 
-        rcubed_j_p =sd_j._rcubed;
+        rcubed_j_p = sd_j._rcubed;
         rcubed_k_p = gamma_tilde*rcubed_j_p + sd_k._rcubed;
 
         solute_j_p = sd_j._solute;
         solute_k_p = gamma_tilde*solute_j_p + sd_k._solute;
 
+        // Re-implement with  "set_droplet" mutator?
+        // --> tried, didn't change performance.
         sd_j = Droplet(multi_j_p, rcubed_j_p, solute_j_p);
         sd_k = Droplet(multi_k_p, rcubed_k_p, solute_k_p);
     } else {

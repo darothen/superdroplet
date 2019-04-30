@@ -29,6 +29,7 @@ public:
 //    double get_radius() const;
 //    double get_solute() const;
     double get_terminal_v() const;
+    void set_droplet(long multi, double rcubed, double solute);
 //    double get_volume() const;
 
     // Static methods

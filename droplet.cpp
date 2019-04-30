@@ -44,6 +44,16 @@ Droplet::Droplet(const Droplet &d) {
 Droplet::~Droplet() {
     --num_droplets;
 }
+
+void Droplet::set_droplet(long multi, double rcubed, double solute) {
+    _multi = multi;
+    _rcubed = rcubed;
+    _solute = solute;
+
+    _radius = pow(rcubed, constants::third);
+    _volume = (4.*M_PI/3.)*rcubed;
+}
+
 //
 //double Droplet::get_mass() const {
 //    return _mass;
