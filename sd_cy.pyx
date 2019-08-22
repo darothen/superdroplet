@@ -230,6 +230,7 @@ def step(list sd_list,
         # Check for collision and coalesce if necessary
         if ( prob - floor(prob) ) >= phi:
             gamma = floor(prob) + 1
+
             if xi_j > xi_k:
                 multi_coalesce(sd_j, sd_k, gamma)
             else:
