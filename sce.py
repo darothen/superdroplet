@@ -41,7 +41,7 @@ import pstats, cProfile
 RHO_WATER = 1e3 # kg/m^3
 
 WRITE_OUT  = True
-DIAG_PLOTS = False
+DIAG_PLOTS = True
 DEBUG      = False
 PROFILE    = False
 
@@ -52,13 +52,13 @@ if PROFILE and DIAG_PLOTS: DIAG_PLOTS = False
 delta_V = 1e6  # Cell volume, m^3
 t_c     = 1.0  # timestep, seconds
 n_part  = 2**17 # number of superdroplets to use in simulation
-casename = "shima_golo"
-kernel = HALL
+casename = "bott_hydro1"
 
 settings = get_case(casename)
-t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana = settings
+t_end, plot_dt, n_0, R_0, X_0, M_0, m_tot_ana, kernel = settings
 
 ## MANUALLY CHANGE CASE
+# kernel = LONG
 # t_end, plot_dt = 60*60+1, 30*60
 # m_tot_ana = 1.0
 # f = 1.0
