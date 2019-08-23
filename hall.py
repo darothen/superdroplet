@@ -1,15 +1,6 @@
-#cython: cdivision=True
-#cython: nonecheck=False
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: profile=True
-#cython: linetrace=True
 
-cimport cython
 import numpy as np
-cimport numpy as np
-
-include "common.pxi"
+from numba import jit
 
 effic_array = np.array(
     [0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,
@@ -43,32 +34,33 @@ effic_array = np.array(
      1.040,1.040,1.040,1.040,1.040,0.033,0.033,0.033,0.033,0.033,
      0.119,0.470,0.950,1.300,1.700,2.300,2.300,2.300,2.300,2.300,
      0.027,0.027,0.027,0.027,0.027,0.125,0.520,1.400,2.300,3.000,
-     4.000,4.000,4.000,4.000,4.000], dtype=np_double)
+     4.000,4.000,4.000,4.000,4.000], dtype=np.double)
 r0_arr = np.array([6., 8., 10., 15., 20., 25., 30., 40., 50.,
-               60., 70., 100., 150., 200., 300.], dtype=np_double)
+               60., 70., 100., 150., 200., 300.], dtype=np.double)
 rat_arr = np.array([0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,
                 0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0], 
-               dtype=np_double)
+               dtype=np.double)
 
-cdef int n_r0 = 15
-cdef int n_rat = 21
-
-assert len(r0_arr) == n_r0
-assert len(rat_arr) == n_rat
+n_r0 = len(r0_arr); assert n_r0 == 15
+n_rat = len(rat_arr); assert n_rat == 21
 
 effic_array = effic_array.reshape((n_r0, n_rat), order='F')
 
 # Memory view into efficiency lookup table
-cdef double[:,:] effic = effic_array
-cdef double[:] rat = rat_arr
-cdef double[:] r0 = r0_arr
+effic = effic_array
+rat = rat_arr
+r0 = r0_arr
 
-cdef double hall_effic(double r_coll, double r_small):
+@jit(nopython=True)
+def dmin(a, b):
+    if a <= b:
+        c = a 
+    else:
+        c = b
+    return c
 
-    cdef:
-        unsigned int k, ir, kk, irat
-        double ratio
-        double p, q, ec, ek
+@jit(nopython=True, nogil=True)
+def hall_effic(r_coll, r_small):
     
     ## Seek for row in effic table
     for k in xrange(1, n_r0):
