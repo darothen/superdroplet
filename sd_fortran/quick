@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+BUILD_DIR="bld/"
+
+if [ -d "$BUILD_DIR" ]; then
+    echo "Re-making build dir at $BUILD_DIR"
+    rm -rf "$BUILD_DIR"
+    rm sce
+fi
+mkdir "$BUILD_DIR"
+
+cd "$BUILD_DIR"
+# export FC=/usr/local/Cellar/gcc/7.2.0/bin/gfortran-7
+export FC=gfortran
+FC=$FC cmake ..
+make
+
+cd ..
+ln -sf $BUILD_DIR/sce .
