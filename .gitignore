@@ -1,4 +1,5 @@
 *.so
 *.csv
 *.pdf
+*.png
 *.pyc
