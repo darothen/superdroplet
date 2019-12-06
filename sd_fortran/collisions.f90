@@ -218,24 +218,25 @@ contains
             if ( prob > 1) big_probs = big_probs + 1
 
             ! Check for collision and coalesce if necessary
+            gamma = floor(prob)
             if ( (prob - floor(prob)) >= phi ) then
-                gamma = floor(prob) + 1.
+                gamma = gamma + 1.
+            end if 
 
-                ! print *, ">>>", i, sd_j%rcubed
-                if (sd_j%multi < sd_k%multi) then
-                    call multi_coalesce(sd_k, sd_j, gamma)
-                else
-                    call multi_coalesce(sd_j, sd_k, gamma)
-                end if
-                ! print *, "<<<", i, sd_j%rcubed
-
-                ! Need to copy back into droplet array for
-                ! updating
-                droplets(i) = sd_j
-                droplets(i + half_n_part) = sd_k
-
-                counter = counter + 1
+            ! print *, ">>>", i, sd_j%rcubed
+            if (sd_j%multi < sd_k%multi) then
+                call multi_coalesce(sd_k, sd_j, gamma)
+            else
+                call multi_coalesce(sd_j, sd_k, gamma)
             end if
+            ! print *, "<<<", i, sd_j%rcubed
+
+            ! Need to copy back into droplet array for
+            ! updating
+            droplets(i) = sd_j
+            droplets(i + half_n_part) = sd_k
+
+            counter = counter + 1
 
         end do
 
