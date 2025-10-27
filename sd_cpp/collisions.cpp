@@ -1,9 +1,12 @@
 
+#include "collisions.hpp"
+
+#include <math.h>
+#include <omp.h>
+
 #include <algorithm>
 #include <iostream>
-#include <math.h>
 
-#include "collisions.hpp"
 #include "util.hpp"
 
 using namespace std;
@@ -78,12 +81,14 @@ void collision_step(std::vector<Droplet> & droplets, double t_c, double delta_V)
     double scaling = (n_part*(n_part-1)/2.)/floor(n_part/2.);
 
     cout << "PROB / COLLISION LOOP" << endl;
+    
     unsigned int counter = 0;
     long half_n_part = n_part/2;
 
     unsigned int big_probs = 0;
     double max_prob = 0., min_prob = 1.0;
 
+    #pragma omp parallel for 
     for (int i=0; i < half_n_part; i++) {
         Droplet & sd_j = droplets[i];
         Droplet & sd_k = droplets[i + half_n_part];
@@ -96,10 +101,13 @@ void collision_step(std::vector<Droplet> & droplets, double t_c, double delta_V)
         double prob = scaling*max_xi*(t_c/delta_V)*K_ij;
 
         if (prob > max_prob)
-            max_prob = prob;
+          #pragma omp atomic write
+          max_prob = prob;
         if (prob < min_prob)
-            min_prob = prob;
+          #pragma omp atomic write
+          min_prob = prob;
         if (prob > 1)
+        #pragma omp atomic
             big_probs++;
 
         // Check for collision and coalescence if necessary
@@ -111,6 +119,7 @@ void collision_step(std::vector<Droplet> & droplets, double t_c, double delta_V)
             else
                 multi_coalesce(sd_j, sd_k, gamma);
 
+            #pragma omp atomic
             counter++;
         }
 

@@ -195,18 +195,26 @@ def step(sd_list, t_c, delta_V, kern):
         if prob > 1: big_probs += 1
 
         # Check for collision and coalesce if necessary
-        if ( prob - np.floor(prob) ) >= phi:
+        if (phi < (prob - np.floor(prob))):
             gamma = np.floor(prob) + 1
-            if xi_j > xi_k:
-                sd_j, sd_k = multi_coalesce(sd_j, sd_k, gamma)
-            else:
-                sd_j, sd_k = multi_coalesce(sd_k, sd_j, gamma)
-            sd_list[i] = sd_j
-            sd_list[i + n_part//2] = sd_k
+        else:
+            gamma = np.floor(prob)
 
-            if not collisions:
-                collisions = True
-            counter += 1
+        if gamma <= 0:
+            continue
+
+        # if ( prob - np.floor(prob) ) >= phi:
+            # gamma = np.floor(prob) + 1
+        if xi_j > xi_k:
+            sd_j, sd_k = multi_coalesce(sd_j, sd_k, gamma)
+        else:
+            sd_j, sd_k = multi_coalesce(sd_k, sd_j, gamma)
+        sd_list[i] = sd_j
+        sd_list[i + n_part//2] = sd_k
+
+        if not collisions:
+            collisions = True
+        counter += 1
 
     print("%5d collisions simulated" % counter)
     print(" Max/min probabilities (count): ", min_prob, max_prob, big_probs)

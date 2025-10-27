@@ -18,4 +18,7 @@ set(SOURCE_FILES
 find_package( Boost COMPONENTS format random )
 include_directories( ${Boost_INCLUDE_DIRS} )
 
+find_package(OpenMP)
+
 add_executable(sce ${SOURCE_FILES})
+target_link_libraries(sce PUBLIC OpenMP::OpenMP_CXX)

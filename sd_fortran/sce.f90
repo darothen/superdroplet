@@ -35,7 +35,7 @@ program sce
 
     integer(kind=ikind), parameter :: &
         ! Total number of superdroplets
-        n_part = 2**13,               &
+        n_part = 2**17,               &
         ! Total simulation time (seconds)
         t_end = 3601,                 &
         ! Output interval time (seconds)
