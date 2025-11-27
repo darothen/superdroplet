@@ -30,3 +30,12 @@ at least 5 dialects:
 *Example 2)* Small-sized cloud droplets with a Hall kernel
 
 ![sample simulation 2](anim/anim_hall2/anim_hall2.gif)
+
+## Timing
+
+All tests done with 2^17 = 131,072 superdroplets using a Golovin kernel out to 3600 seconds with a 1 second step time.
+
+| **Implementation** | **Time (seconds)** |
+| ------------------ | ------------------ |
+| Rust | 7.49 |
+| Julia | 16.44 |

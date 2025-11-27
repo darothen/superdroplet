@@ -22,9 +22,11 @@ const X_0 = (4. * π / 3.) * (R_0^3)  # total droplet volume
 const M_0 = X_0*RHO_WATER      # total droplet water mass
 const delta_v = 1e6            # total parcel volume
 const t_c = 1.0                # model timestep (seconds)
-const kernel = :long          # Collision kernel
+# const kernel = :long          # Collision kernel
+const kernel = :golovin
 
-const n_part = 2^17   # Total number of superdroplets
+# const n_part = 2^17   # Total number of superdroplets
+const n_part = 2^17
 const t_end = 3601.0   # Total simulation time (seconds)
 const plot_dt = 1800.0/3 # Output interval time
 
@@ -47,7 +49,7 @@ r_grid = (x_grid .* 3. ./ π ./ 4.).^THIRD
 
 # Create the initial droplet array
 droplets = [Droplet(xi_i, r^3) for r in r_grid]
-m_grid = x_grid .* [d.density for d in droplets]
+# m_grid = x_grid .* [d.density for d in droplets]
 
 println("\nGRID SETUP")
 @printf "   radii: %5.3g - %5.3g m\n" droplets[1].radius droplets[end].radius
