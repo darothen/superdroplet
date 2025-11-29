@@ -1,4 +1,5 @@
 use indicatif::{ProgressBar, ProgressStyle};
+use plotters::prelude::*;
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
 use rand_distr::{Distribution, Exp};
@@ -20,10 +21,6 @@ fn main() {
     let t_end: u32 = 3600; // Total simulation time (seconds)
     let plot_dt: u32 = 600; // Output interval time
     let smooth_window: usize = 9;
-
-    // CSV output configuration
-    let output_fn = String::from("collision_output.csv");
-    let mut csv_writer: Option<csv::Writer<std::fs::File>> = None;
 
     // Use the Xoshiro256++ RNG. The default RNG uses the ChaCha12 algorithm and is
     // cryptographically secure -- way overkill for our Monte Carlo simulations.
@@ -104,49 +101,89 @@ fn main() {
     let wm0 = sd_rust::core::total_water(&droplets);
     println!("\nInitial total water mass = {:5.3e} kg\n", wm0);
 
-    // Initialize CSV output
-    if PLOT {
-        let bin_grid = io::bin_droplets(&droplets);
-        let mut writer = csv::Writer::from_path(output_fn).unwrap();
-        writer
-            .write_record(
-                std::iter::once("-9999".to_string())
-                    .chain(bin_grid.mids.iter().map(|x| format!("{:e}", x)))
-                    .collect::<Vec<String>>(),
-            )
-            .unwrap();
-        csv_writer = Some(writer);
-    }
-
     // Main loop
     let mut masses: Vec<f64> = vec![wm0];
     let mut stopwatch = utils::time::Stopwatch::new(0);
     let mut step: u32 = 0;
 
     println!("\nBEGINNING MAIN SIMULATION LOOP\n");
+    let mut chart = None;
+    if PLOT {
+        print!("   INITIALIZING PLOT ... ");
+        let root_drawing_area = BitMapBackend::new("plot.png", (1024, 768)).into_drawing_area();
+        root_drawing_area.fill(&WHITE).unwrap();
+        let bin_grid = io::bin_droplets(&droplets);
+        let smoothed_values: Vec<f64> = bin_grid
+            .values
+            .windows(smooth_window)
+            .map(|window| utils::math::median(&window))
+            .collect();
+        let (x_min, x_max) = (bin_grid.mids[0], bin_grid.mids[bin_grid.mids.len() - 1]);
+        let (y_min, y_max) = (
+            *smoothed_values
+                .iter()
+                .min_by(|a, b| a.total_cmp(b))
+                .unwrap(),
+            *smoothed_values
+                .iter()
+                .max_by(|a, b| a.total_cmp(b))
+                .unwrap(),
+        );
+
+        // println!(
+        //     "   PLOT RANGE: [{:.2e}, {:.2e}] x [{:.2e}, {:.2e}]",
+        //     x_min, x_max, y_min, y_max
+        // );
+
+        let mut chart_obj = ChartBuilder::on(&root_drawing_area)
+            // .set_label_area_size(LabelAreaPosition::Left, 40)
+            // .set_label_area_size(LabelAreaPosition::Bottom, 40)
+            .x_label_area_size(40)
+            .y_label_area_size(40)
+            .build_cartesian_2d((x_min..x_max).log_scale(), y_min..y_max)
+            .unwrap();
+        chart_obj.configure_mesh().draw().unwrap();
+        chart_obj
+            .draw_series(LineSeries::new(
+                bin_grid
+                    .mids
+                    .iter()
+                    .zip(smoothed_values.iter())
+                    .map(|(x, y)| (*x, *y)),
+                &RED,
+            ))
+            .unwrap()
+            .label("t=0 (initial)")
+            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+        chart = Some(chart_obj);
+        println!(" done.\n");
+    }
+
     while stopwatch.total_seconds() <= t_end {
-        if PLOT && step % plot_dt == 0 {
+        if PLOT && step % plot_dt == 0 && step > 0 {
             let bin_grid = io::bin_droplets(&droplets);
 
             // Compute rolling median of the values of the bin grid
-            // Pad the edges to avoid truncation
-            let half_window = smooth_window / 2;
-            let smoothed_values: Vec<f64> = (0..bin_grid.values.len())
-                .map(|i| {
-                    let start = i.saturating_sub(half_window);
-                    let end = (i + half_window + 1).min(bin_grid.values.len());
-                    utils::math::median(&bin_grid.values[start..end])
-                })
+            let smoothed_values: Vec<f64> = bin_grid
+                .values
+                .windows(smooth_window)
+                .map(|window| utils::math::median(&window))
                 .collect();
-            if let Some(ref mut writer) = csv_writer {
-                writer
-                    .write_record(
-                        std::iter::once(format!("{:}", stopwatch.total_seconds()))
-                            .chain(smoothed_values.iter().map(|x| format!("{:e}", x)))
-                            .collect::<Vec<String>>(),
-                    )
-                    .unwrap();
-            }
+
+            chart
+                .as_mut()
+                .unwrap()
+                .draw_series(LineSeries::new(
+                    bin_grid
+                        .mids
+                        .iter()
+                        .zip(smoothed_values.iter())
+                        .map(|(x, y)| (*x, *y)),
+                    &RED,
+                ))
+                .unwrap()
+                .label(&format!("t={} s", stopwatch.total_seconds()))
+                .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
         }
 
         let collision_step_result = physics::collision_step(&mut droplets, &model_config, &mut rng)
@@ -167,9 +204,14 @@ fn main() {
     }
 
     if PLOT {
-        if let Some(ref mut writer) = csv_writer {
-            writer.flush().unwrap();
-        }
+        chart
+            .as_mut()
+            .unwrap()
+            .configure_series_labels()
+            .background_style(&WHITE.mix(0.8))
+            .border_style(&BLACK)
+            .draw()
+            .unwrap();
     }
 
     println!("\n\nSimulation completed successfully.");
