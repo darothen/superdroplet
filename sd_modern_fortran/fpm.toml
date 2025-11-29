@@ -1,0 +1,27 @@
+name = "sd_modern_fortran"
+version = "0.1.0"
+license = "license"
+author = "Daniel Rothenberg"
+maintainer = "daniel@danielrothenberg.com"
+copyright = "Copyright 2025, Daniel Rothenberg"
+
+[build]
+auto-executables = true
+auto-tests = true
+auto-examples = true
+module-naming = false
+# compiler-flags = ["-std=f2023"]
+
+[install]
+library = false
+test = false
+
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
+[dependencies]
+stdlib.git = "https://github.com/fortran-lang/stdlib"
+stdlib.branch = "stdlib-fpm"
+csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
