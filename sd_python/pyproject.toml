@@ -1,0 +1,36 @@
+[project]
+name = "sd-python"
+version = "0.1.0"
+description = "Python Superdroplet Model"
+readme = "README.md"
+authors = [
+    { name = "Daniel Rothenberg", email = "daniel@danielrothenberg.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "tqdm>=4.67.1",
+]
+
+[project.scripts]
+sd_python = "sd_python.sce:sce"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
