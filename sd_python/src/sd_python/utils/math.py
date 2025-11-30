@@ -70,3 +70,26 @@ def sample_exponential_dist(lam: float) -> float:
 
     # Use inverse transform sampling: X = -ln(U)/λ where U ~ Uniform(0,1)
     return -math.log(random.random()) / lam
+
+
+def rolling_median(values: Sequence[float], window: int) -> list[float]:
+    """Smooth a sequence of values using a windowed median filter.
+
+    The `window` parameter is the sie of the window looking in one direction -
+    so a window size of 3 will look at the current value and the two values before and after.
+    """
+    n = len(values)
+    if n == 0:
+        return []
+    if n == 1:
+        return values
+
+    if window == 0:
+        return values
+
+    smoothed_values = []
+    for i in range(n):
+        start = max(0, i - window)
+        end = min(n, i + window + 1)
+        smoothed_values.append(median(values[start:end]))
+    return smoothed_values

@@ -13,7 +13,7 @@ from sd_python.core.droplet import Droplet, compute_total_water
 from sd_python.physics.collision import collision_step
 from sd_python.physics.kernels import Kernel
 from sd_python.utils.binning import bin_droplets
-from sd_python.utils.math import linspace, sample_exponential_dist
+from sd_python.utils.math import linspace, rolling_median, sample_exponential_dist
 from sd_python.utils.time import Stopwatch
 
 #: Enable debug mode - print detailed information
@@ -119,10 +119,13 @@ def sce():
         if PLOT and step % plot_dt == 0:
             # print(f"   PLOTTING ({stopwatch}) ... ")
             bin_values = bin_droplets(droplets, bin_edges)
+            smoothed_bin_values = rolling_median(
+                bin_values, window=(smooth_window // 2)
+            )
             with open(output_fn, "a") as csv_file:
                 csv_writer = csv.writer(csv_file)
                 row_vals = [stopwatch.total_seconds()] + [
-                    csv_val_fmt.format(val=value) for value in bin_values
+                    csv_val_fmt.format(val=value) for value in smoothed_bin_values
                 ]
                 csv_writer.writerow(row_vals)
 
