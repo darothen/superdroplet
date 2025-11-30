@@ -30,6 +30,17 @@ class Droplet:
         terminal_velocity (float): The terminal velocity of the droplet (m/s).
     """
 
+    __slots__ = (
+        "multi",
+        "rcubed",
+        "solute",
+        "density",
+        "radius",
+        "volume",
+        "mass",
+        "terminal_velocity",
+    )
+
     multi: int
     rcubed: float
     solute: float

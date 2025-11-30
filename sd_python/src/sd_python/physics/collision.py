@@ -25,9 +25,17 @@ def multi_coalesce(sd_j: Droplet, sd_k: Droplet, gamma: float):
         sd_k: Droplet to coalesce.
         gamma: Multi-coalescence factor.
     """
-    ratio = sd_j.multi / sd_k.multi
+    # Cache attribute lookups
+    multi_j = sd_j.multi
+    multi_k = sd_k.multi
+
+    ratio = multi_j / multi_k
     gamma_t = gamma if gamma < ratio else ratio
-    excess = sd_j.multi - int(math.floor(gamma_t * sd_k.multi))
+
+    # Pre-compute floor once
+    gamma_t_multi_k = gamma_t * multi_k
+    excess = multi_j - int(math.floor(gamma_t_multi_k))
+
     if excess > 0:
         # Case 1: Some droplets from sd_j remain unpaired
         sd_j.multi = excess
@@ -43,8 +51,8 @@ def multi_coalesce(sd_j: Droplet, sd_k: Droplet, gamma: float):
         sd_k.solute = math.fma(gamma_t, sd_j.solute, sd_k.solute)
     else:
         # Case 2: All droplets from sd_j are paired, split sd_k
-        multi_j_p = int(math.floor(sd_k.multi / 2.0))
-        multi_k_p = sd_k.multi - multi_j_p
+        multi_j_p = int(math.floor(multi_k / 2.0))
+        multi_k_p = multi_k - multi_j_p
 
         rcubed_new = math.fma(gamma_t, sd_j.rcubed, sd_k.rcubed)
         solute_new = math.fma(gamma_t, sd_j.solute, sd_k.solute)
@@ -83,35 +91,48 @@ def collision_step(
     half_n_part = int(
         n_part / 2.0
     )  # n_part should always be a power of 2, so this is safe
-    scaling = (n_part * (n_part - 1.0) / 2.0) / float(half_n_part)
 
+    # Pre-compute combined scaling factor to reduce multiplications in loop
+    scaling = (n_part * (n_part - 1.0) / 2.0) / float(half_n_part)
     # Pre-generate all random numbers for parallel iteration
     # TODO: Do we need this optimization? I doubt it does anything here.
     # random_numbers = [random.random() for _ in range(half_n_part)]
+    scaling_factor = scaling * float(t_c) / delta_v
 
     counter = 0
     big_probs = 0
     max_prob = 0.0
     min_prob = 1.0
-    total_xi = 0.0
-    # total_water = 0.0
+
+    # Cache kernel method reference to avoid repeated attribute lookups
+    kernel_compute = kernel.compute
 
     for i in range(half_n_part):
         sd_j = droplets[i]
         sd_k = droplets[i + half_n_part]
 
-        phi = random.random()
-        k_ij = kernel.compute(sd_j, sd_k)
+        # Hoist attribute lookups to local variables
+        multi_j = sd_j.multi
+        multi_k = sd_k.multi
 
-        # Avoid using "rich" comparison in Python min/max functions
-        if sd_j.multi < sd_k.multi:
-            max_xi, min_xi = sd_k.multi, sd_j.multi
-        else:
-            max_xi, min_xi = sd_j.multi, sd_k.multi
-        if min_xi == 0:
+        # Skip if either droplet has zero multiplicity
+        if multi_j == 0 or multi_k == 0:
             continue
 
-        prob = scaling * float(max_xi) * (float(t_c) / delta_v) * k_ij
+        phi = random.random()
+        k_ij = kernel_compute(sd_j, sd_k)
+
+        # Determine max/min multiplicity
+        if multi_j < multi_k:
+            max_xi = multi_k
+            min_xi = multi_j
+        else:
+            max_xi = multi_j
+            min_xi = multi_k
+
+        prob = scaling_factor * float(max_xi) * k_ij
+
+        # Update statistics
         if prob > max_prob:
             max_prob = prob
         if prob < min_prob:
@@ -119,11 +140,11 @@ def collision_step(
         if prob > 1:
             big_probs += 1
 
-        if (prob - math.floor(prob)) > phi:
-            gamma = math.floor(prob) + 1.0
-            # TODO: Can we avoid doing this comparison twice? It's done earlier; we should
-            # save the result of the comparison and use it here.
-            if sd_j.multi < sd_k.multi:
+        # Check for collision
+        prob_floor = math.floor(prob)
+        if (prob - prob_floor) > phi:
+            gamma = prob_floor + 1.0
+            if multi_j < multi_k:
                 multi_coalesce(sd_k, sd_j, gamma)
             else:
                 multi_coalesce(sd_j, sd_k, gamma)
