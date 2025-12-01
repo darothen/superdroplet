@@ -40,3 +40,17 @@ uv run pytest --cov=sd_python --cov-report=term-missing
 uv run pytest tests/test_core_droplet.py -v
 ```
 
+### Performance Profiling
+
+In general, the shuffling is the slowest part of this implementation, although kernel computation isn't far behind it.
+
+```bash
+# Record performance cProfile
+uv run python profile_cprofile.py
+
+# Visualize with flameprof
+uvx flameprof profile_output.prof > profile_output.svg
+
+# Visualize with snakeviz
+uvx snakeviz profile_output.prof
+```

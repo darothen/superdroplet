@@ -35,7 +35,8 @@ def sce():
     kernel = Kernel.GOLOVIN  # Collision kernel
 
     n_part = 2**17  # Total number of superdroplets
-    t_end = 3600  # Total simulation time (seconds)
+    # t_end = 3600  # Total simulation time (seconds)
+    t_end = 601
     plot_dt = 600  # Output interval time
     smooth_window = 9  # Smoothing window for the median
 
@@ -149,3 +150,7 @@ def sce():
 
     ## Clean up
     # main_pbar.close()
+
+
+if __name__ == "__main__":
+    sce()

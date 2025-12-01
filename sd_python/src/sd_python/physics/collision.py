@@ -84,7 +84,9 @@ def collision_step(
     kernel = model_config.kernel
 
     # Permute the droplet list
-    knuth_shuffle(droplets)
+    random.shuffle(droplets)
+    # NOTE: Use the standard library `shuffle` for performance.
+    # knuth_shuffle(droplets)
 
     # Generate candidate pairs
     n_part = float(len(droplets))

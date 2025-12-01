@@ -26,7 +26,13 @@ def median(values: Sequence[float]) -> float:
 
 
 def knuth_shuffle(values: Sequence[Any]):
-    """Shuffle a sequence of values in-place using the Knuth shuffle algorithm."""
+    """Shuffle a sequence of values in-place using the Knuth shuffle algorithm.
+
+    Note:
+        The `random.shuffle` function in the standard library is actually a more
+        performant implementation of the same core idea here.
+
+    """
     n = len(values)
     for i in range(n - 1, 0, -1):
         j = random.randint(0, i)
