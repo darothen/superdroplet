@@ -3,8 +3,7 @@ import math
 import random
 
 from sd_python.core.config import ModelConfig
-from sd_python.core.constants import FOUR_THIRD, PI, RHO_WATER
-from sd_python.core.droplet import Droplet, compute_total_water
+from sd_python.core.droplet import Droplet
 
 
 @dataclasses.dataclass
@@ -13,7 +12,7 @@ class CollisionStepResult:
     big_probs: int
     max_prob: float
     min_prob: float
-    total_xi: float
+    total_xi: int
 
 
 def multi_coalesce(sd_j: Droplet, sd_k: Droplet, gamma: float):
