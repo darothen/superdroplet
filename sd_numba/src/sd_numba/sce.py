@@ -30,11 +30,10 @@ def sce():
     m_0 = x_0 * RHO_WATER  # Total droplet water mass
     delta_v = 1e6  # Total parcel volume
     t_c = 1.0  # Model timestep (seconds)
-    kernel = Kernel.GOLOVIN  # Collision kernel
+    kernel = Kernel.LONG  # Collision kernel
 
     n_part = 2**17  # Total number of superdroplets
-    # t_end = 3600  # Total simulation time (seconds)
-    t_end = 601
+    t_end = 3600  # Total simulation time (seconds)
     plot_dt = 600  # Output interval time
     smooth_window = 9  # Smoothing window for the median
 

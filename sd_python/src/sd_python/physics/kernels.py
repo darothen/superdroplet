@@ -93,7 +93,8 @@ def long_kernel(sd_j: Droplet, sd_k: Droplet) -> float:
     tv_diff = tv_j - tv_k
     r_sum = r_j + r_k
 
-    (r_small, r_large) = (r_j, r_k) if r_j > r_k else (r_k, r_j)
+    # Convert radii to microns for collection efficiency calculation
+    (r_small, r_large) = (r_j, r_k) if r_j < r_k else (r_k, r_j)
     r_small = r_small * 1e6  # convert to microns
     r_large = r_large * 1e6  # convert to microns
 
