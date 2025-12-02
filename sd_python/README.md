@@ -16,11 +16,13 @@ sd_python/
 │   │   ├── constants.py     # Physical constants
 │   │   └── droplet.py       # Droplet data structure and physics
 │   ├── physics/
+│   │   ├── collision.py     # Collision/coalescence logic
 │   │   └── kernels.py       # Collision kernels
 │   └── utils/
 │       ├── math.py          # Mathematical utilities
 │       └── time.py          # Time tracking utilities
 ├── tests/                   # Comprehensive test suite
+├── Justfile                 # Common tasks
 ├── pyproject.toml           # Project configuration
 └── README.md                # This file
 ```

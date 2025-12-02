@@ -1,0 +1,26 @@
+default:
+    @just --list
+
+# Run tests
+test:
+    uv run pytest -v
+
+# Run tests with coverage
+test-coverage:
+    uv run pytest --cov=sd_python --cov-report=term-missing
+
+# Run test for a specific file
+test-module MODULE:
+    uv run pytest tests/test_{{MODULE}}.py -v
+
+# Profile the code
+profile:
+    uv run python profile_cprofile.py
+
+# Visualize the profile
+profile-visualize:
+    uvx snakeviz profile_output.prof
+
+# Visualize the profile with flamegraph
+profile-visualize-flamegraph:
+    uvx flameprof profile_output.prof > profile_output.svg

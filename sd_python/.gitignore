@@ -1,0 +1,6 @@
+*.csv
+*.md
+*.svg
+*.pyc
+**/__pycache__
+.coverage
