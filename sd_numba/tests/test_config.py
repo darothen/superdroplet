@@ -1,8 +1,8 @@
-"""Tests for sd_python.core.config module."""
+"""Tests for sd_numba.core.config module."""
 
 import pytest
-from sd_python.core.config import ModelConfig
-from sd_python.physics.kernels import Kernel
+from sd_numba.core.config import ModelConfig
+from sd_numba.physics.kernels import Kernel
 
 
 class TestModelConfig:

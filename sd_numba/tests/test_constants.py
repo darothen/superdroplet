@@ -1,9 +1,9 @@
-"""Tests for sd_python.core.constants module."""
+"""Tests for sd_numba.core.constants module."""
 
 import math
 
 import pytest
-from sd_python.core import constants
+from sd_numba.core import constants
 
 
 def test_pi_constant():

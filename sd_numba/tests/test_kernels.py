@@ -1,12 +1,13 @@
-"""Tests for sd_python.physics.kernels module."""
+"""Tests for sd_numba.physics.kernels module."""
 
 import pytest
-from sd_python.core.constants import FOUR_THIRD, PI
-from sd_python.core.droplet import Droplet
-from sd_python.physics.kernels import (
+from sd_numba.core.constants import FOUR_THIRD, PI
+from sd_numba.core.droplet import Droplet
+from sd_numba.physics.kernels import (
     GOLOVIN_CONSTANT,
     Kernel,
     calc_hydro_kernel,
+    compute_kernel,
     golovin_kernel,
     hydro_kernel,
     long_kernel,
@@ -22,31 +23,29 @@ class TestKernelEnum:
         assert Kernel.HYDRO == 2
         assert Kernel.LONG == 3
 
-    def test_kernel_compute_golovin(self, small_droplet, medium_droplet):
-        """Test Kernel.compute with GOLOVIN kernel."""
-        result = Kernel.GOLOVIN.compute(small_droplet, medium_droplet)
+    def test_compute_kernel_golovin(self, small_droplet, medium_droplet):
+        """Test compute_kernel with GOLOVIN kernel."""
+        result = compute_kernel(int(Kernel.GOLOVIN), small_droplet, medium_droplet)
         expected = golovin_kernel(small_droplet, medium_droplet)
         assert result == pytest.approx(expected)
 
-    def test_kernel_compute_hydro(self, small_droplet, medium_droplet):
-        """Test Kernel.compute with HYDRO kernel."""
-        result = Kernel.HYDRO.compute(small_droplet, medium_droplet)
+    def test_compute_kernel_hydro(self, small_droplet, medium_droplet):
+        """Test compute_kernel with HYDRO kernel."""
+        result = compute_kernel(int(Kernel.HYDRO), small_droplet, medium_droplet)
         expected = hydro_kernel(small_droplet, medium_droplet)
         assert result == pytest.approx(expected)
 
-    def test_kernel_compute_long(self, small_droplet, medium_droplet):
-        """Test Kernel.compute with LONG kernel."""
-        result = Kernel.LONG.compute(small_droplet, medium_droplet)
+    def test_compute_kernel_long(self, small_droplet, medium_droplet):
+        """Test compute_kernel with LONG kernel."""
+        result = compute_kernel(int(Kernel.LONG), small_droplet, medium_droplet)
         expected = long_kernel(small_droplet, medium_droplet)
         assert result == pytest.approx(expected)
 
-    def test_kernel_compute_invalid(self, small_droplet, medium_droplet):
-        """Test that invalid kernel raises ValueError."""
-        # Create an invalid kernel value
-        with pytest.raises(ValueError, match="is not a valid Kernel"):
-            # Use a value that's not in the enum
-            invalid_kernel = 999
-            Kernel(invalid_kernel).compute(small_droplet, medium_droplet)
+    def test_compute_kernel_invalid(self, small_droplet, medium_droplet):
+        """Test that invalid kernel returns 0.0."""
+        # In nopython mode, we return 0.0 for invalid kernels (can't raise)
+        result = compute_kernel(999, small_droplet, medium_droplet)
+        assert result == 0.0
 
 
 class TestGolovinKernel:
@@ -199,10 +198,6 @@ class TestLongKernel:
         result = long_kernel(d_small, d_large)
 
         # For large droplets, e_coll should be 1.0
-        # The long kernel uses the larger radius to determine e_coll
-        # In this case, r_large = 60 μm which is >= 50, so e_coll = 1.0
-        # However, the actual implementation checks both droplets, so we just
-        # verify that the result is positive and reasonable
         assert result > 0
 
         # Verify it's less than or equal to hydro kernel (as expected)
@@ -255,3 +250,37 @@ class TestLongKernel:
                 assert (
                     long_result <= hydro_result + 1e-15
                 )  # Small tolerance for numerical errors
+
+    def test_long_kernel_r_small_r_large_assignment(self):
+        """Test that r_small and r_large are correctly assigned (bug fix verification)."""
+        # This test specifically verifies the bug fix where r_small and r_large
+        # were incorrectly swapped. The fix ensures:
+        # - r_small = min(r_j, r_k)
+        # - r_large = max(r_j, r_k)
+
+        d_small = Droplet.new(multi=1, radius=10e-6)  # 10 μm
+        d_large = Droplet.new(multi=1, radius=100e-6)  # 100 μm
+
+        # Both orderings should give the same result
+        result1 = long_kernel(d_small, d_large)
+        result2 = long_kernel(d_large, d_small)
+
+        # Results should be identical (symmetry)
+        assert result1 == pytest.approx(result2)
+
+        # For large droplets (>= 50 μm), e_coll should be 1.0
+        # So Long kernel should equal hydro kernel
+        hydro_result = hydro_kernel(d_small, d_large)
+        assert result1 == pytest.approx(hydro_result)
+
+    def test_long_kernel_small_collector_large_collected(self):
+        """Test Long kernel with specific small and large droplets."""
+        # r_small < 50 μm, r_large >= 50 μm case
+        d1 = Droplet.new(multi=1, radius=20e-6)  # 20 μm (small)
+        d2 = Droplet.new(multi=1, radius=60e-6)  # 60 μm (large)
+
+        result = long_kernel(d1, d2)
+
+        # Since r_large >= 50, e_coll = 1.0
+        hydro_result = hydro_kernel(d1, d2)
+        assert result == pytest.approx(hydro_result)

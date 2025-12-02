@@ -1,7 +1,7 @@
-"""Tests for sd_python.utils.time module."""
+"""Tests for sd_numba.utils.time module."""
 
 import pytest
-from sd_python.utils.time import Stopwatch
+from sd_numba.utils.time import Stopwatch
 
 
 class TestStopwatchCreation:
