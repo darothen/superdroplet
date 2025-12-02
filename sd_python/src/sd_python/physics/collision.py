@@ -5,7 +5,6 @@ import random
 from sd_python.core.config import ModelConfig
 from sd_python.core.constants import FOUR_THIRD, PI, RHO_WATER
 from sd_python.core.droplet import Droplet, compute_total_water
-from sd_python.utils.math import knuth_shuffle
 
 
 @dataclasses.dataclass
@@ -83,22 +82,13 @@ def collision_step(
     delta_v = model_config.delta_v
     kernel = model_config.kernel
 
-    # Permute the droplet list
-    random.shuffle(droplets)
-    # NOTE: Use the standard library `shuffle` for performance.
-    # knuth_shuffle(droplets)
-
     # Generate candidate pairs
-    n_part = float(len(droplets))
-    half_n_part = int(
-        n_part / 2.0
-    )  # n_part should always be a power of 2, so this is safe
+    n_part = len(droplets)
+    half_n_part = n_part // 2  # n_part should always be a power of 2, so this is safe
 
     # Pre-compute combined scaling factor to reduce multiplications in loop
-    scaling = (n_part * (n_part - 1.0) / 2.0) / float(half_n_part)
-    # Pre-generate all random numbers for parallel iteration
-    # TODO: Do we need this optimization? I doubt it does anything here.
-    # random_numbers = [random.random() for _ in range(half_n_part)]
+    n_part_float = float(n_part)
+    scaling = (n_part_float * (n_part_float - 1.0) / 2.0) / float(half_n_part)
     scaling_factor = scaling * float(t_c) / delta_v
 
     counter = 0
@@ -109,9 +99,22 @@ def collision_step(
     # Cache kernel method reference to avoid repeated attribute lookups
     kernel_compute = kernel.compute
 
-    for i in range(half_n_part):
-        sd_j = droplets[i]
-        sd_k = droplets[i + half_n_part]
+    # Shuffle the droplet list
+    # random.shuffle(droplets)
+    # Optimization: Instead of shuffling the entire droplet list (O(n)),
+    # randomly sample just the indices we need for pairing.
+    # random.sample() selects 2*half_n_part indices without replacement,
+    # which we then pair up: (0,1), (2,3), (4,5), etc.
+    # Maintains statistical equivalence with shuffle+pair approach.
+    sampled_indices = random.sample(range(n_part), 2 * half_n_part)
+
+    for pair_idx in range(half_n_part):
+        # Pair up: (0,1), (2,3), (4,5), etc.
+        idx_j = sampled_indices[2 * pair_idx]
+        idx_k = sampled_indices[2 * pair_idx + 1]
+
+        sd_j = droplets[idx_j]
+        sd_k = droplets[idx_k]
 
         # Hoist attribute lookups to local variables
         multi_j = sd_j.multi
