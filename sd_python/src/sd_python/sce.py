@@ -136,11 +136,11 @@ def sce():
         min_prob = collision_step_result.min_prob
         max_prob = collision_step_result.max_prob
         big_probs = collision_step_result.big_probs
-        total_water = compute_total_water(droplets)
+        # total_water = compute_total_water(droplets)
         collision_message = (
             f"Collisions: {collision_step_result.counter} | "
             f"Probabilities: {collision_step_result.min_prob:.2f} - {collision_step_result.max_prob:.2f} [{collision_step_result.big_probs}] | "
-            f"Total water: {total_water:.2e} kg"
+            # f"Total water: {total_water:.2e} kg"
         )
         print(f"Step {step:5d} | {stopwatch} | {collision_message}")
         # main_pbar.update(t_c)
