@@ -2,6 +2,7 @@ import dataclasses
 
 import numpy as np
 from numba import jit
+from numba.typed import List as TypedList
 
 from sd_numba.core.config import ModelConfig
 from sd_numba.core.droplet import Droplet
@@ -17,7 +18,7 @@ class CollisionStepResult:
     total_xi: int
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def multi_coalesce(sd_j: Droplet, sd_k: Droplet, gamma: float):
     """Performs a multi-coalescence event.
 
@@ -66,18 +67,21 @@ def multi_coalesce(sd_j: Droplet, sd_k: Droplet, gamma: float):
 
 
 def collision_step(
-    droplets: list[Droplet], model_config: ModelConfig
+    typed_droplets: TypedList[Droplet], model_config: ModelConfig
 ) -> CollisionStepResult:
     """Performs one collision-coalescence timestep."""
     result_tup = _collision_step(
-        droplets, model_config.step_seconds, model_config.delta_v, model_config.kernel
+        typed_droplets,
+        model_config.step_seconds,
+        model_config.delta_v,
+        int(model_config.kernel),
     )
     return CollisionStepResult(*result_tup)
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def _collision_step(
-    droplets: list[Droplet], t_c: float, delta_v: float, kernel: Kernel
+    droplets: TypedList[Droplet], t_c: float, delta_v: float, kernel: Kernel
 ) -> tuple[int, int, float, float, int]:
     """Performs one collision-coalescence timestep.
 
@@ -110,9 +114,8 @@ def _collision_step(
     max_prob = 0.0
     min_prob = 1.0
 
-    # Cache kernel method reference to avoid repeated attribute lookups
-    # Shuffle the droplet list
-    sampled_indices = np.random.choice(n_part, 2 * half_n_part, replace=False)
+    # Shuffle the droplet list by permuting the indices
+    sampled_indices = np.random.permutation(n_part)[: 2 * half_n_part]
 
     for pair_idx in range(half_n_part):
         # Pair up: (0,1), (2,3), (4,5), etc.
@@ -161,6 +164,8 @@ def _collision_step(
                 multi_coalesce(sd_j, sd_k, gamma)
             counter += 1
 
-    total_xi = np.sum(np.array([d.multi for d in droplets]))
+    total_xi = 0
+    for droplet in droplets:
+        total_xi += droplet.multi
 
     return (counter, big_probs, max_prob, min_prob, total_xi)

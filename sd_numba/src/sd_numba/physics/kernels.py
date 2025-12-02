@@ -14,25 +14,24 @@ class Kernel(enum.IntEnum):
     LONG = 3
 
 
-@jit(fastmath=True)
-def compute_kernel(self, sd_j: Droplet, sd_k: Droplet) -> float:
+@jit(nopython=True, fastmath=True)
+def compute_kernel(kernel_type: int, sd_j: Droplet, sd_k: Droplet) -> float:
     """Calculate the collision kernel for two droplets."""
-    match self:
-        case Kernel.GOLOVIN:
-            return golovin_kernel(sd_j, sd_k)
-        case Kernel.HYDRO:
-            return hydro_kernel(sd_j, sd_k)
-        case Kernel.LONG:
-            return long_kernel(sd_j, sd_k)
-        case _:
-            raise ValueError(f"Invalid kernel: {self}")
+    if kernel_type == Kernel.GOLOVIN:
+        return golovin_kernel(sd_j, sd_k)
+    elif kernel_type == Kernel.HYDRO:
+        return hydro_kernel(sd_j, sd_k)
+    elif kernel_type == Kernel.LONG:
+        return long_kernel(sd_j, sd_k)
+    else:
+        return 0.0
 
 
 #: Golovin collision kernel constant (m³/s)
 GOLOVIN_CONSTANT = 1500.0 * FOUR_THIRD * PI
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def golovin_kernel(sd_j: Droplet, sd_k: Droplet) -> float:
     """Calculate the Golovin collision kernel for two droplets.
 
@@ -49,7 +48,7 @@ def golovin_kernel(sd_j: Droplet, sd_k: Droplet) -> float:
     return GOLOVIN_CONSTANT * (sd_j.rcubed + sd_k.rcubed)
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def calc_hydro_kernel(
     e_coal: float, e_coll: float, r_sum: float, tv_diff: float
 ) -> float:
@@ -57,7 +56,7 @@ def calc_hydro_kernel(
     return e_coal * e_coll * PI * r_sum * r_sum * abs(tv_diff)
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def hydro_kernel(sd_j: Droplet, sd_k: Droplet) -> float:
     """Calculate the hydrodynamic collision kernel for two droplets.
 
@@ -80,7 +79,7 @@ def hydro_kernel(sd_j: Droplet, sd_k: Droplet) -> float:
     return calc_hydro_kernel(1.0, 1.0, r_sum, tv_diff)
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def long_kernel(sd_j: Droplet, sd_k: Droplet) -> float:
     """Calculate the long collision kernel for two droplets.
 

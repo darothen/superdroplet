@@ -3,6 +3,7 @@
 import csv
 
 import numpy as np
+from numba.typed import List as TypedList
 
 from sd_numba.core.config import ModelConfig
 from sd_numba.core.constants import FOUR_THIRD, PI, RHO_WATER, THREE_FOURTH
@@ -61,7 +62,7 @@ def sce():
     r_grid = np.cbrt(x_grid * THREE_FOURTH / PI)
 
     # Create the initial droplet array
-    droplets = [Droplet.new(xi_i, radius) for radius in r_grid]
+    droplets = TypedList([Droplet.new(xi_i, radius) for radius in r_grid])
     m_grid = np.asarray([d.mass for d in droplets])
 
     print("\nGRID SETUP")

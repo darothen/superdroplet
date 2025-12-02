@@ -107,7 +107,7 @@ class Droplet:
         self.terminal_velocity = compute_terminal_velocity(self.radius, self.mass)
 
 
-@jit(fastmath=True)
+@jit(nopython=True, fastmath=True)
 def compute_terminal_velocity(radius: float, mass: float) -> float:
     """Compute the terminal velocity of a droplet using the Beard (1976) parameterization.
 
@@ -140,13 +140,29 @@ def compute_terminal_velocity(radius: float, mass: float) -> float:
     return 1e-2 * alpha * x_to_beta  # cm/s -> m/s
 
 
-def compute_total_water(droplets: list[Droplet]) -> float:
-    """Compute the total water mass of a list of droplets.
+@jit(nopython=True, fastmath=True)
+def _compute_total_water_jitted(droplets) -> float:
+    """Compute the total water mass using jitted loop.
 
     Args:
-        droplets (list[Droplet]): The list of Droplet instances
+        droplets: TypedList of Droplet instances
 
     Returns:
         The total water mass in kilograms.
     """
-    return sum(droplet.mass * droplet.multi for droplet in droplets)
+    total = 0.0
+    for droplet in droplets:
+        total += droplet.mass * droplet.multi
+    return total
+
+
+def compute_total_water(droplets) -> float:
+    """Compute the total water mass of a list of droplets.
+
+    Args:
+        droplets: The list of Droplet instances (TypedList or list)
+
+    Returns:
+        The total water mass in kilograms.
+    """
+    return _compute_total_water_jitted(droplets)

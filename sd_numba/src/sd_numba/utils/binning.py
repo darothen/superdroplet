@@ -2,8 +2,56 @@ from typing import Sequence
 
 import numpy as np
 import numpy.typing as npt
+from numba import jit
 
 from sd_numba.core.droplet import Droplet
+
+
+@jit(nopython=True, fastmath=True)
+def _bin_droplets_jitted(
+    droplets, bin_edges: npt.NDArray[np.float64]
+) -> npt.NDArray[np.float64]:
+    """Jitted version of bin_droplets for performance.
+
+    Args:
+        droplets: TypedList of Droplet objects to bin.
+        bin_edges: NumPy array of bin edges.
+
+    Returns:
+        NumPy array of bin values.
+    """
+    n_droplets = len(droplets)
+
+    # Extract radii, masses, and multis into arrays for efficient sorting
+    radii = np.empty(n_droplets, dtype=np.float64)
+    masses = np.empty(n_droplets, dtype=np.float64)
+    multis = np.empty(n_droplets, dtype=np.int32)
+
+    for i in range(n_droplets):
+        radii[i] = droplets[i].radius
+        masses[i] = droplets[i].mass
+        multis[i] = droplets[i].multi
+
+    sorted_indices = np.argsort(radii)
+
+    bin_values = np.zeros(len(bin_edges) - 1, dtype=np.float64)
+    droplet_idx = 0
+
+    for bin_idx in range(len(bin_edges) - 1):
+        bin_r_max = bin_edges[bin_idx + 1] * 1e-6
+        bin_value = 0.0
+
+        while droplet_idx < n_droplets:
+            idx = sorted_indices[droplet_idx]
+            if radii[idx] < bin_r_max:
+                bin_value += masses[idx] * multis[idx]
+                droplet_idx += 1
+            else:
+                break
+
+        bin_values[bin_idx] = bin_value
+
+    return bin_values
 
 
 def bin_droplets(
@@ -19,30 +67,6 @@ def bin_droplets(
         bin_edges: NumPy array of bin edges.
 
     Returns:
-        List of bin values.
+        NumPy array of bin values.
     """
-
-    # Compute a list of the indices corresponding to the sorted droplets
-    sorted_indices = np.argsort([d.radius for d in droplets])
-
-    bin_values = np.zeros(len(bin_edges) - 1)
-    bin_idx = 0
-    droplet_idx = 0
-    for right in bin_edges[1:]:
-        bin_value = 0.0
-        bin_r_max = right * 1e-6
-
-        # We won't vectorize this loop because it already uses an optimization to
-        # minimize the number of comparisons we perform.
-        for idx in sorted_indices[droplet_idx:]:
-            droplet = droplets[idx]
-            if droplet.radius < bin_r_max:
-                bin_value += droplet.mass * droplet.multi
-                droplet_idx += 1
-            else:
-                break
-
-        bin_values[bin_idx] = bin_value
-        bin_idx += 1
-
-    return bin_values
+    return _bin_droplets_jitted(droplets, bin_edges)
