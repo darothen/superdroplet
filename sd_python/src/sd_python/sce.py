@@ -5,7 +5,15 @@ import math
 import random
 import time
 
-import tqdm
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from sd_python.core.config import ModelConfig
 from sd_python.core.constants import FOUR_THIRD, PI, RHO_WATER, THREE_FOURTH
@@ -103,19 +111,28 @@ def sce():
     step = 0
     print("\nBEGINNING MAIN SIMULATION LOOP\n")
 
-    # Configure tqdm progress bar to match Rust implementation
-    # main_pbar = tqdm.tqdm(
-    #     total=t_end,
-    #     unit="step",
-    #     position=0,
-    #     leave=True,
-    #     # bar_format="{elapsed} -> {remaining} [{bar:60}] {percentage:3.0f}%",
-    #     # ncols=None,
-    #     # dynamic_ncols=True,
-    #     # postfix="Starting simulation...",
-    # )
-    # desc_pbar = tqdm.tqdm(bar_format="{postfix}", position=1, leave=True)
+    # Configure progress bar
+    main_progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TextColumn("•"),
+        TimeElapsedColumn(),
+        TextColumn("•"),
+        TimeRemainingColumn(),
+    )
+    collision_progress = Progress(
+        TextColumn("[progress.description]{task.description}")
+    )
+    main_task = main_progress.add_task(description="Running simulation", total=t_end)
+    collision_task = collision_progress.add_task(
+        description="Running collision step", total=t_end
+    )
+    main_progress.start()
+    collision_progress.start()
 
+    # Main loop
     while stopwatch.total_seconds() <= t_end:
         if PLOT and step % plot_dt == 0:
             # print(f"   PLOTTING ({stopwatch}) ... ")
@@ -142,14 +159,15 @@ def sce():
             f"Probabilities: {collision_step_result.min_prob:.2f} - {collision_step_result.max_prob:.2f} [{collision_step_result.big_probs}] | "
             # f"Total water: {total_water:.2e} kg"
         )
-        print(f"Step {step:5d} | {stopwatch} | {collision_message}")
-        # main_pbar.update(t_c)
-        # desc_pbar.set_postfix_str(collision_message)
+        # print(f"Step {step:5d} | {stopwatch} | {collision_message}")
+        collision_progress.update(collision_task, description=collision_message)
         step += 1
+        main_progress.update(main_task, advance=int(t_c))
         stopwatch.increment(int(t_c))
 
     ## Clean up
-    # main_pbar.close()
+    main_progress.stop()
+    collision_progress.stop()
 
 
 if __name__ == "__main__":

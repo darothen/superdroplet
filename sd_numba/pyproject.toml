@@ -11,7 +11,7 @@ dependencies = [
     "bottleneck>=1.6.0",
     "numba>=0.62.1",
     "numpy>=2.3.5",
-    "tqdm>=4.67.1",
+    "rich>=14.2.0",
 ]
 
 [project.scripts]

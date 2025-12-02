@@ -4,6 +4,15 @@ import csv
 
 import numpy as np
 from numba.typed import List as TypedList
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from sd_numba.core.config import ModelConfig
 from sd_numba.core.constants import FOUR_THIRD, PI, RHO_WATER, THREE_FOURTH
@@ -30,7 +39,7 @@ def sce():
     m_0 = x_0 * RHO_WATER  # Total droplet water mass
     delta_v = 1e6  # Total parcel volume
     t_c = 1.0  # Model timestep (seconds)
-    kernel = Kernel.LONG  # Collision kernel
+    kernel = Kernel.GOLOVIN  # Collision kernel
 
     n_part = 2**17  # Total number of superdroplets
     t_end = 3600  # Total simulation time (seconds)
@@ -98,6 +107,28 @@ def sce():
     step = 0
     print("\nBEGINNING MAIN SIMULATION LOOP\n")
 
+    # Configure progress bar
+    main_progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TextColumn("•"),
+        TimeElapsedColumn(),
+        TextColumn("•"),
+        TimeRemainingColumn(),
+    )
+    collision_progress = Progress(
+        TextColumn("[progress.description]{task.description}")
+    )
+    main_task = main_progress.add_task(description="Running simulation", total=t_end)
+    collision_task = collision_progress.add_task(
+        description="Running collision step", total=t_end
+    )
+    main_progress.start()
+    collision_progress.start()
+
+    # Main loop
     while stopwatch.total_seconds() <= t_end:
         if PLOT and step % plot_dt == 0:
             # print(f"   PLOTTING ({stopwatch}) ... ")
@@ -122,14 +153,15 @@ def sce():
             f"Probabilities: {collision_step_result.min_prob:.2f} - {collision_step_result.max_prob:.2f} [{collision_step_result.big_probs}] | "
             f"Total water: {total_water:.2e} kg"
         )
-        print(f"Step {step:5d} | {stopwatch} | {collision_message}")
-        # main_pbar.update(t_c)
-        # desc_pbar.set_postfix_str(collision_message)
+        # print(f"Step {step:5d} | {stopwatch} | {collision_message}")
+        collision_progress.update(collision_task, description=collision_message)
         step += 1
+        main_progress.update(main_task, advance=int(t_c))
         stopwatch.increment(int(t_c))
 
     ## Clean up
-    # main_pbar.close()
+    main_progress.stop()
+    collision_progress.stop()
 
 
 if __name__ == "__main__":
