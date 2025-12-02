@@ -1,0 +1,40 @@
+[project]
+name = "sd-numba"
+version = "0.1.0"
+description = "Python/Numba Superdroplet Model"
+readme = "README.md"
+authors = [
+    { name = "Daniel Rothenberg", email = "daniel@danielrothenberg.com" }
+]
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "bottleneck>=1.6.0",
+    "numba>=0.62.1",
+    "numpy>=2.3.5",
+    "tqdm>=4.67.1",
+]
+
+[project.scripts]
+sd_numba = "sd_numba.sce:sce"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
