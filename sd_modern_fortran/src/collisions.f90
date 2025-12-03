@@ -23,15 +23,20 @@ module collisions
     public :: model_config_t_
     public :: collision_step
     public :: collision_step_result_t
+    public :: cleanup_model_config
 
     !> Model configuration type
     !!
     !! Contains simulation parameters used throughout the collision step.
+    !! Also includes pre-allocated workspace arrays to avoid per-timestep allocations.
     type :: model_config_t
         integer :: step_seconds      !< Timestep duration (s)
         integer :: num_droplets      !< Number of superdroplets
         integer :: kernel            !< Collision kernel type
         real(kind=dp) :: delta_v     !< Parcel volume (m^3)
+        ! Pre-allocated workspace arrays (avoid repeated allocation/deallocation)
+        integer, dimension(:), allocatable :: shuffled_indices  !< Workspace for shuffled indices
+        real(kind=dp), dimension(:), allocatable :: phis        !< Workspace for random numbers
     end type model_config_t
 
     interface model_config_t_
@@ -63,11 +68,18 @@ contains
         step_seconds, num_droplets, delta_v, kernel)
         integer, intent(in) :: step_seconds, num_droplets, kernel
         real(kind=dp), intent(in) :: delta_v
+        integer :: half_n_part
 
         init_model_config%step_seconds = step_seconds
         init_model_config%num_droplets = num_droplets
         init_model_config%delta_v = delta_v
         init_model_config%kernel = kernel
+
+        ! Pre-allocate workspace arrays once to avoid repeated allocation/deallocation
+        ! in collision_step (major performance optimization)
+        half_n_part = floor(real(num_droplets, kind=dp) / 2.0_dp)
+        allocate(init_model_config%shuffled_indices(num_droplets))
+        allocate(init_model_config%phis(half_n_part))
 
     end function init_model_config
     
@@ -108,12 +120,19 @@ contains
         real(kind=dp), intent(in) :: gamma
 
         real(kind=dp) :: &
-            ratio, gamma_t, rcubed_k_p, solute_k_p, rcubed_new, solute_new
+            ratio, gamma_t, rcubed_k_p, solute_k_p, rcubed_new, solute_new, &
+            multi_j_real, multi_k_real, gamma_t_times_multi_k
         integer :: excess, multi_j_p, multi_k_p
         
-        ratio = real(sd_j%multi, kind=dp) / real(sd_k%multi, kind=dp)
+        multi_j_real = real(sd_j%multi, kind=dp)
+        multi_k_real = real(sd_k%multi, kind=dp)
+        
+        ratio = multi_j_real / multi_k_real
         gamma_t = min(gamma, ratio)
-        excess = sd_j%multi - int(floor(gamma_t*sd_k%multi))
+        
+        ! Avoid repeated multiplication
+        gamma_t_times_multi_k = gamma_t * multi_k_real
+        excess = sd_j%multi - int(floor(gamma_t_times_multi_k))
 
         if ( excess > 0 ) then
             ! Case 1: Some droplets from sd_j remain unpaired
@@ -128,7 +147,7 @@ contains
             call sd_k%set_droplet(sd_k%multi, rcubed_k_p, solute_k_p)
         else
             ! Case 2: All droplets from sd_j are paired; split sd_k
-            multi_j_p = floor(real(sd_k%multi, kind=dp) / 2.0_dp)
+            multi_j_p = int(multi_k_real * 0.5_dp)
             multi_k_p = sd_k%multi - multi_j_p
 
             rcubed_new = (gamma_t * sd_j%rcubed) + sd_k%rcubed
@@ -159,13 +178,11 @@ contains
     subroutine collision_step(droplets, collision_step_result, model_config)
         type(droplet_t), dimension(:), intent(inout) :: droplets
         type(collision_step_result_t), intent(out) :: collision_step_result
-        type(model_config_t), intent(in) :: model_config
+        type(model_config_t), intent(inout) :: model_config
 
         integer :: n_part, half_n_part, min_xi, max_xi, counter, big_probs, i, kernel, idx_j, idx_k
         real(kind=dp) :: &
             t_c_over_delta_v, scaling, K_ij, prob, gamma, max_prob, min_prob, phi, floor_prob
-        integer, dimension(:), allocatable :: shuffled_indices
-        real(kind=dp), dimension(:), allocatable :: phis
 
         kernel = model_config%kernel
 
@@ -177,58 +194,63 @@ contains
         ! Precompute t_c/delta_v to avoid repeated division
         t_c_over_delta_v = real(model_config%step_seconds, kind=dp) / model_config%delta_v
 
-        ! PERFORMANCE OPTIMIZATION: Shuffle indices instead of droplet array
-        ! This avoids copying large droplet structures (~80 bytes each)
-        allocate(shuffled_indices(n_part))
-        call generate_shuffled_indices(shuffled_indices, n_part, 1)
+
+        ! Shuffle indices instead of droplet array to avoid copying large structures
+        call generate_shuffled_indices(model_config%shuffled_indices, n_part, 1)
 
         ! Pre-generate random numbers for collision decisions
-        allocate(phis(half_n_part))
         ! NOTE: Strictly speaking, the random numbers for probability gen should
         ! be in the half-open interval [0,1), but this should be sufficient for practical purposes
-        phis = rvs_uniform(0.0_dp, 1.0_dp, half_n_part)
+        model_config%phis = rvs_uniform(0.0_dp, 1.0_dp, half_n_part)
 
         counter = 0
         big_probs = 0
         max_prob = 0.
         min_prob = 1.0
 
-        ! Main collision loop - use shuffled indices to access pairs
-        do concurrent (i = 1:half_n_part)
+        ! Main collision loop
+        do i = 1, half_n_part
             ! Get indices from shuffled array
-            idx_j = shuffled_indices(i)
-            idx_k = shuffled_indices(i + half_n_part)
-            phi = phis(i)
+            idx_j = model_config%shuffled_indices(i)
+            idx_k = model_config%shuffled_indices(i + half_n_part)
+            phi = model_config%phis(i)
 
-            max_xi = max(droplets(idx_j)%multi, droplets(idx_k)%multi)
-            min_xi = min(droplets(idx_j)%multi, droplets(idx_k)%multi)
+            ! Optimize min/max with explicit checks
+            if (droplets(idx_j)%multi < droplets(idx_k)%multi) then
+                min_xi = droplets(idx_j)%multi
+                max_xi = droplets(idx_k)%multi
+            else
+                min_xi = droplets(idx_k)%multi
+                max_xi = droplets(idx_j)%multi
+            end if
+            
             if (min_xi == 0) cycle
 
             K_ij = compute_collision_kernel(droplets(idx_j), droplets(idx_k), kernel)
 
             prob = scaling * max_xi * t_c_over_delta_v * K_ij
+            
+            ! Update diagnostics
             if ( prob > max_prob ) max_prob = prob
             if ( prob < min_prob ) min_prob = prob
-            if ( prob > 1) big_probs = big_probs + 1
+            if ( prob > 1.0_dp) big_probs = big_probs + 1
 
             ! Check for collision and coalesce if necessary
             floor_prob = floor(prob)
             if ( (prob - floor_prob) > phi ) then
                 gamma = floor_prob + 1.0_dp
 
-                if (droplets(idx_j)%multi < droplets(idx_k)%multi) then
-                    call multi_coalesce(droplets(idx_k), droplets(idx_j), gamma)
-                else
+                ! Coalesce: pass smaller multiplicity droplet first
+                if (min_xi == droplets(idx_j)%multi) then
                     call multi_coalesce(droplets(idx_j), droplets(idx_k), gamma)
+                else
+                    call multi_coalesce(droplets(idx_k), droplets(idx_j), gamma)
                 end if
 
                 counter = counter + 1
             end if
 
         end do
-
-        deallocate(shuffled_indices)
-        deallocate(phis)
 
         ! Populate the collision step result
         collision_step_result%counter = counter
@@ -243,5 +265,19 @@ contains
         !     min_prob, max_prob, big_probs
 
     end subroutine collision_step
+
+    !> Cleanup model configuration workspace arrays
+    !!
+    !! Deallocates the workspace arrays in model_config to free memory.
+    !! Should be called at the end of the simulation.
+    !!
+    !! @param[inout] model_config - Model configuration to cleanup
+    subroutine cleanup_model_config(model_config)
+        type(model_config_t), intent(inout) :: model_config
+
+        if (allocated(model_config%shuffled_indices)) deallocate(model_config%shuffled_indices)
+        if (allocated(model_config%phis)) deallocate(model_config%phis)
+
+    end subroutine cleanup_model_config
 
 end module collisions

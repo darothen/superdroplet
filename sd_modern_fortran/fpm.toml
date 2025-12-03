@@ -10,7 +10,8 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
-# compiler-flags = ["-std=f2023"]
+# Note: This fpm version doesn't support compiler-flags in toml
+# Pass flags via FPM_FFLAGS environment variable instead
 
 [install]
 library = false

@@ -14,7 +14,8 @@
 program main
 
     ! Module imports
-    use collisions, only : collision_step, collision_step_result_t, model_config_t, model_config_t_
+    use collisions, only : collision_step, collision_step_result_t, model_config_t, model_config_t_, &
+                           cleanup_model_config
     ! TODO: Switch to stdlib_kinds::dp instead of defining our own?
     use constants, only : dp, PI, THIRD, THREE_FOURTH
     use droplet_mod, only : droplet_t, droplet_t_, total_water
@@ -195,5 +196,8 @@ program main
         print *, "ERROR: Could not close output CSV file."
         stop
     end if
+
+    ! Cleanup allocated workspace arrays
+    call cleanup_model_config(model_config)
     
 end program main
