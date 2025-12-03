@@ -1,0 +1,35 @@
+# Julia-specific files
+Manifest.toml
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+deps/deps.jl
+
+# Compiled files
+*.ji
+*.o
+*.so
+*.dylib
+*.dll
+
+# Build artifacts
+/build/
+
+# Output files
+collision_output.csv
+*.csv
+
+# Jupyter notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
