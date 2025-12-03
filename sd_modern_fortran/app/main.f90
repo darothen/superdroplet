@@ -46,7 +46,8 @@ program main
         t_c = 1,                   & ! Model timestep (seconds)
         t_end = 3601,              & ! Total simulation time (seconds)
         plot_dt = 600,             & ! Output interval time (seconds)
-        kernel = LONG             ! Collision kernel enumeration    
+        debug_dt = 60,             & ! Debug print statement interval time (seconds)
+        kernel = GOLOVIN             ! Collision kernel enumeration    
 
     ! Workspace variables
     real(kind=dp) :: &
@@ -173,7 +174,7 @@ program main
             call csv_out%next_row()
         end if
 
-        if ( DEBUG ) print '(A,I0,A,I0,A,I0,A,I0,A,ES12.3,A,ES12.3,A,I0,A,ES12.3,A)', &
+        if ( DEBUG .and. ( mod(step, debug_dt) == 0 ) ) print '(A,I0,A,I0,A,I0,A,I0,A,ES12.3,A,ES12.3,A,I0,A,ES12.3,A)', &
             "STEP: ", step, " (", stopwatch%minutes, " min ", stopwatch%seconds, " s) | Collisions: ", &
             collision_step_result%counter, " | Probs: ", &
             collision_step_result%min_prob, " - ", collision_step_result%max_prob, " [", &
