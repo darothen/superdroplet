@@ -1,6 +1,13 @@
 """Tests for droplet module."""
 
 using Test
+using SuperdropletModel
+
+# Import constants for easier use
+const PI = SuperdropletModel.PI
+const FOUR_THIRD = SuperdropletModel.FOUR_THIRD
+const THREE_FOURTH = SuperdropletModel.THREE_FOURTH
+const RHO_WATER = SuperdropletModel.RHO_WATER
 
 @testset "Droplet Creation" begin
     @testset "Basic properties" begin

@@ -1,6 +1,11 @@
 """Tests for collision kernels module."""
 
 using Test
+using SuperdropletModel
+
+# Import constants for easier use
+const PI = SuperdropletModel.PI
+const FOUR_THIRD = SuperdropletModel.FOUR_THIRD
 
 @testset "Kernel Enum" begin
     @test Golovin isa Kernel

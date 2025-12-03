@@ -1,6 +1,7 @@
 """Tests for math utilities module."""
 
 using Test
+using SuperdropletModel
 using Random
 
 @testset "Knuth Shuffle" begin

@@ -1,6 +1,7 @@
 """Tests for binning module."""
 
 using Test
+using SuperdropletModel
 
 @testset "Bin Droplets" begin
     @testset "Basic binning" begin

@@ -138,5 +138,5 @@ Calculate the total water mass in a collection of droplets.
 - Total water mass in kilograms
 """
 function total_water(droplets::Vector{Droplet})::Float64
-    return sum(d.mass * Float64(d.multi) for d in droplets)
+    return sum(d.mass * Float64(d.multi) for d in droplets; init=0.0)
 end

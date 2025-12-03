@@ -1,6 +1,7 @@
 """Tests for time module."""
 
 using Test
+using SuperdropletModel
 
 @testset "Stopwatch Creation" begin
     @testset "Zero seconds" begin

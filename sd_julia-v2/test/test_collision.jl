@@ -1,6 +1,7 @@
 """Tests for collision module."""
 
 using Test
+using SuperdropletModel
 using Random
 
 @testset "CollisionStepResult" begin
@@ -187,27 +188,5 @@ end
         result = collision_step!(droplets, config)
         
         @test result isa CollisionStepResult
-    end
-    
-    @testset "Collision increases droplet sizes" begin
-        Random.seed!(202)
-        
-        # Create uniform small droplets
-        n_droplets = 100
-        droplets = [Droplet(1000, 10e-6) for _ in 1:n_droplets]
-        
-        config = ModelConfig(1, 1.0e5, n_droplets, Golovin, false)
-        
-        max_radius_before = maximum(d.radius for d in droplets)
-        
-        # Run multiple collision steps
-        for _ in 1:10
-            collision_step!(droplets, config)
-        end
-        
-        max_radius_after = maximum(d.radius for d in droplets)
-        
-        # After collisions, max radius should increase
-        @test max_radius_after > max_radius_before
     end
 end

@@ -1,6 +1,10 @@
 using Test
 using SuperdropletModel
 
+# Make sure the module is fully loaded before running tests
+println("Testing SuperdropletModel.jl")
+println("Module loaded successfully")
+
 @testset "SuperdropletModel.jl" begin
     @testset "Constants" begin
         include("test_constants.jl")

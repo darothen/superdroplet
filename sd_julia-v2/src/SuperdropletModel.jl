@@ -4,37 +4,6 @@ SuperdropletModel
 A Julia implementation of the Shima et al. (2009) superdroplet method for
 simulating stochastic collision-coalescence in clouds.
 
-This module provides a complete implementation of the superdroplet algorithm
-with support for multiple collision kernels (Golovin, Hydrodynamic, Long).
-
-# Example Usage
-
-```julia
-using SuperdropletModel
-
-# Run the simulation with default parameters
-run_simulation()
-
-# Run with debug output enabled
-run_simulation(debug=true)
-
-# Run without CSV output
-run_simulation(plot=false)
-```
-
-# Main Components
-
-- **Core**: `Droplet`, `ModelConfig`, physical constants
-- **Physics**: Collision kernels and collision-coalescence algorithm
-- **Utils**: Time tracking, binning, and mathematical utilities
-
-# Reference
-
-Shima, S., Kusano, K., Kawano, A., Sugiyama, T., & Kawahara, S. (2009).
-The super-droplet method for the numerical simulation of clouds and
-precipitation: A particle-based and probabilistic microphysics model
-coupled with a non-hydrostatic model. Quarterly Journal of the Royal
-Meteorological Society, 135(642), 1307-1320.
 """
 module SuperdropletModel
 
