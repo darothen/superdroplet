@@ -1,0 +1,61 @@
+# Build directories
+build/
+cmake-build-*/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+sd_cpp
+
+# Output files
+collision_output.csv
+*.csv
+
+# Profiling output
+sd_cpp_profile.txt
+perf.data
+perf.data.old
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# macOS
+.DS_Store
+
+# Testing
+Testing/
+CTestTestfile.cmake

@@ -1,0 +1,79 @@
+# Justfile for sd_cpp
+
+N_JOBS := "4"
+
+# Default recipe to display help
+default:
+    @just --list
+
+# Build the project in release mode
+build:
+    mkdir -p build
+    cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
+    cd build && cmake --build . -j{{N_JOBS}}
+
+# Build in debug mode with debugging symbols
+build-debug:
+    mkdir -p build-debug
+    cd build-debug && cmake .. -DCMAKE_BUILD_TYPE=Debug
+    cd build-debug && cmake --build . -j{{N_JOBS}}
+
+# Clean build artifacts
+clean:
+    rm -rf build build-debug collision_output.csv
+
+# Build and run the simulation
+run: build
+    ./build/sd_cpp
+
+# Run with debug build
+run-debug: build-debug
+    ./build-debug/sd_cpp
+
+# Create a fresh build
+rebuild: clean build
+
+# Profile the application (macOS: sample, Linux: perf)
+profile-macos: build
+    @echo "Profiling with macOS sample..."
+    @./build/sd_cpp & PID=$!
+    @sleep 0.5
+    @sample $PID 30 -file sd_cpp_profile.txt
+    @wait $PID
+    @echo "Profile saved to sd_cpp_profile.txt"
+
+profile-linux: build
+    @echo "Profiling with Linux perf..."
+    perf record -g ./build/sd_cpp
+    perf report
+
+# Simple time-based profiling
+profile-time: build
+    @echo "Running with timing..."
+    /usr/bin/time -l ./build/sd_cpp
+
+# Show compiler optimization report (GCC)
+opt-report:
+    mkdir -p build-opt
+    cd build-opt && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Rpass=loop-vectorize"
+    cd build-opt && cmake --build .
+
+# Benchmark the simulation
+benchmark: build
+    @echo "Running benchmark..."
+    @time ./build/sd_cpp > /dev/null
+
+# Build and run all tests
+test: build
+    @echo "Running tests..."
+    cd build && ctest --output-on-failure
+
+# Build and run tests with verbose output
+test-verbose: build
+    @echo "Running tests with verbose output..."
+    cd build && ctest --output-on-failure --verbose
+
+# Run a specific test
+test-one TEST: build
+    @echo "Running {{TEST}}..."
+    ./build/tests/{{TEST}}
