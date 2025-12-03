@@ -23,6 +23,22 @@ Pkg.activate(".")
 Pkg.instantiate()
 ```
 
+## Testing
+
+Run the test suite to verify the installation:
+
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.test()
+```
+
+Or from the command line:
+
+```bash
+julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
 ## Usage
 
 ### Basic Usage

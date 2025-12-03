@@ -33,7 +33,7 @@ function run_simulation(; debug::Bool=false, plot::Bool=true)
     t_c = 1  # Model timestep (seconds)
     kernel = Long  # Collision kernel
     
-    n_part = 2^23  # Total number of superdroplets
+    n_part = 2^17  # Total number of superdroplets
     t_end = 3600  # Total simulation time (seconds)
     plot_dt = 600  # Output interval time
     smooth_window = 9  # Smoothing window for the median
