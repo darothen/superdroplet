@@ -235,16 +235,3 @@ an internal timestep of 1 second, using the Golovin kernel:
 > about 13 minutes using O(200k) superdroplets to reach this stage, which
 > is already slower by 2x-4x compared to the other implementations when they
 > have 64x more droplets to track!
-
-
-
----
-
-All tests done with 2^17 = 131,072 superdroplets using a Golovin kernel out to 3600 seconds with a 1 second step time.
-
-
-
-| **Implementation** | **Time (seconds)** |
-| ------------------ | ------------------ |
-| Rust | 7.49 |
-| Julia | 16.44 |
