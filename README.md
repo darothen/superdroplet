@@ -235,3 +235,5 @@ an internal timestep of 1 second, using the Golovin kernel:
 > about 13 minutes using O(200k) superdroplets to reach this stage, which
 > is already slower by 2x-4x compared to the other implementations when they
 > have 64x more droplets to track!
+
+![Scaling curves for model implementations](scaling.png)
