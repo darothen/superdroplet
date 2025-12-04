@@ -228,7 +228,7 @@ an internal timestep of 1 second, using the Golovin kernel:
    </tr>
 </table>
 
-> ![note]
+> [!NOTE]
 > We don't have reliable vanilla Python timing because the model is so slow;
 > performance is dominated by what happens ~45 minutes into the simulation,
 > where the number of collisions per step notably increases. It would take
