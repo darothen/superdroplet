@@ -115,12 +115,13 @@ def _collision_step(
     min_prob = 1.0
 
     # Shuffle the droplet list by permuting the indices
-    sampled_indices = np.random.permutation(n_part)[: 2 * half_n_part]
+    sampled_indices = np.random.permutation(n_part)
 
     for pair_idx in range(half_n_part):
-        # Pair up: (0,1), (2,3), (4,5), etc.
-        idx_j = sampled_indices[2 * pair_idx]
-        idx_k = sampled_indices[2 * pair_idx + 1]
+        # Pair up: split into two halves and pair corresponding elements
+        # (0, half_n_part), (1, half_n_part+1), (2, half_n_part+2), etc.
+        idx_j = sampled_indices[pair_idx]
+        idx_k = sampled_indices[pair_idx + half_n_part]
 
         sd_j = droplets[idx_j]
         sd_k = droplets[idx_k]

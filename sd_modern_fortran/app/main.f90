@@ -43,7 +43,7 @@ program main
         delta_V = 1e6_dp                  ! Total parcel volume
     
     integer, parameter :: &
-        n_part = 2**17,            & ! Total number of superdroplets
+        n_part = 2**21,            & ! Total number of superdroplets
         t_c = 1,                   & ! Model timestep (seconds)
         t_end = 3601,              & ! Total simulation time (seconds)
         plot_dt = 600,             & ! Output interval time (seconds)
@@ -52,9 +52,10 @@ program main
 
     ! Workspace variables
     real(kind=dp) :: &
-        x, wm0, wm_i, total_droplets, rcubed_max
+        x, wm0, wm_i, total_droplets, rcubed_max, elapsed_time
     integer :: &
-        i, j, droplet_idx, xi_i, seed_put, seed_get, step
+        i, j, droplet_idx, xi_i, seed_put, seed_get, step, &
+        time_start, time_end, time_rate
     real(kind=dp), dimension(n_part) :: &
         r_grid, x_grid, droplet_rcubed
     integer, dimension(n_part) :: sorted_indices
@@ -135,6 +136,10 @@ program main
     print '(/,A,F12.3,A)', "Initial total water mass = ", wm0, " kg"
 
     print '(/,A,/)', "BEGINNING MAIN SIMULATION LOOP"
+    
+    ! Start wall-clock timing for the simulation
+    call system_clock(time_start, time_rate)
+    
     stopwatch = stopwatch_t(0)
     step = 0
     main_loop : do while (stopwatch%total_seconds() <= t_end)
@@ -186,7 +191,12 @@ program main
 
     end do main_loop
 
+    ! End wall-clock timing and compute elapsed time
+    call system_clock(time_end)
+    elapsed_time = real(time_end - time_start, kind=dp) / real(time_rate, kind=dp)
+
     print '(/,/,A)', "Simulation completed successfully."
+    print '(A,F12.3,A)', "Runtime: ", elapsed_time, " seconds"
     wm_i = total_water(droplets)
     print '(A,F12.3,A,F5.1,A)', "Remaining water mass: ", wm_i, " kg (", &
           (wm_i / wm0) * 100.d0, "% of initial)"
@@ -196,6 +206,11 @@ program main
         print *, "ERROR: Could not close output CSV file."
         stop
     end if
+
+    ! Write timing information to file
+    open(unit=100, file='time.out', status='replace', action='write')
+    write(100, '(F12.6)') elapsed_time
+    close(100)
 
     ! Cleanup allocated workspace arrays
     call cleanup_model_config(model_config)

@@ -162,7 +162,87 @@ defined with respect to objext properties instead of the object itself?
 
 ## Performance Testing
 
+The performance statistics we provide here were generated using an extremely simple
+protocol: we merely implemented a stopwatch in all of the core programs that tracks
+the total elapsed time between just before the main model simulation loop begins
+and when cleanup is finished. This means that we bake-in any just-in-time compilation
+times for Julia and Numba.
+
+The first round of timing runs were performed on a machine running Linux Mint with
+kernel 6.8, powered by a Ryzen 7 7700X. We performed a 3600 second simulation with
+an internal timestep of 1 second, using the Golovin kernel:
+
+<table>
+   <tr>
+      <td> </td>
+      <td colspan="4"><b># of Superdroplets</b></td>
+   </tr>
+   <tr>
+      <td><b>Language</b></td>
+      <td>2<sup>15</sup></td>
+      <td>2<sup>17</sup></td>
+      <td>2<sup>19</sup></td>
+      <td>2<sup>21</sup></td>
+   </tr>
+   <tr>
+      <td><b>Python<sup>†</sup></b></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+   </tr>
+   <tr>
+      <td><b>Python w/ Numba</b></td>
+      <td>3.9</td>
+      <td>15.8</td>
+      <td>175.2</td>
+      <td>874.5</td>
+   </tr>
+   <tr>
+      <td><b>Julia</b></td>
+      <td>0.9</td>
+      <td>4.4</td>
+      <td>43.8</td>
+      <td>373.5</td>
+   </tr>
+   <tr>
+      <td><b>C++</b></td>
+      <td>0.7</td>
+      <td>2.9</td>
+      <td>19.6</td>
+      <td>155.3</td>
+   </tr>
+   <tr>
+      <td><b>Fortran</b></td>
+      <td>1.9</td>
+      <td>11.5</td>
+      <td>68.2</td>
+      <td>347.9</td>
+   </tr>
+   <tr>
+      <td><b>Rust</b></td>
+      <td>1.0</td>
+      <td>4.2</td>
+      <td>38.2</td>
+      <td>245.9</td>
+   </tr>
+</table>
+
+> ![note]
+> We don't have reliable vanilla Python timing because the model is so slow;
+> performance is dominated by what happens ~45 minutes into the simulation,
+> where the number of collisions per step notably increases. It would take
+> about 13 minutes using O(200k) superdroplets to reach this stage, which
+> is already slower by 2x-4x compared to the other implementations when they
+> have 64x more droplets to track!
+
+
+
+---
+
 All tests done with 2^17 = 131,072 superdroplets using a Golovin kernel out to 3600 seconds with a 1 second step time.
+
+
 
 | **Implementation** | **Time (seconds)** |
 | ------------------ | ------------------ |

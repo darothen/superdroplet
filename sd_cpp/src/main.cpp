@@ -77,7 +77,7 @@ int main() {
   const physics::Kernel kernel = physics::Kernel::Golovin; // Collision kernel
 
   const size_t n_part =
-      static_cast<size_t>(utils::pow2(17)); // Total number of superdroplets
+      static_cast<size_t>(utils::pow2(21)); // Total number of superdroplets
   const unsigned int t_end = 3600;          // Total simulation time (seconds)
   const unsigned int plot_dt = 600;         // Output interval time
   const size_t smooth_window = 9;
@@ -221,14 +221,20 @@ int main() {
   }
 
   std::cout << "Simulation completed successfully.\n";
+  double elapsed_seconds = duration.count() / 1000.0;
   std::cout << "Runtime: " << std::fixed << std::setprecision(2)
-            << duration.count() / 1000.0 << " seconds\n";
+            << elapsed_seconds << " seconds\n";
 
   const double final_mass = masses.back();
   std::cout << "Remaining water mass: " << std::scientific
             << std::setprecision(3) << final_mass << " kg (" << std::fixed
             << std::setprecision(1) << (final_mass / wm0 * 100.0)
             << "% of initial)\n";
+
+  // Write timing to file
+  std::ofstream time_file("time.out");
+  time_file << std::fixed << std::setprecision(6) << elapsed_seconds << "\n";
+  time_file.close();
 
   return 0;
 }

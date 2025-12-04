@@ -1,0 +1,25 @@
+# Justfile for sd_rust
+
+# Default recipe to display help
+default:
+    @just --list
+
+# Run simulation
+run:
+    cargo run --release
+
+# Build in release mode
+build:
+    cargo build --release
+
+# Run test suite
+test:
+    cargo test
+
+# Clean build artifacts
+clean:
+    cargo clean
+
+# Plot output
+plot:
+    ../plot_output.py collision_output.csv

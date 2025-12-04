@@ -3,6 +3,9 @@ use rand::SeedableRng;
 use rand::rngs::SmallRng;
 use rand_distr::{Distribution, Exp};
 use sd_rust::{Droplet, Kernel, constants, io, physics, utils};
+use std::fs::File;
+use std::io::Write;
+use std::time::Instant;
 
 const DEBUG: bool = false;
 const PLOT: bool = true;
@@ -14,9 +17,9 @@ fn main() {
     let _m0: f64 = x0 * constants::RHO_WATER; // Total droplet water mass
     let delta_v: f64 = 1e6; // Total parcel volume
     let t_c: u32 = 1; // Model timestep (seconds)
-    let kernel: Kernel = Kernel::Long; // Collision kernel
+    let kernel: Kernel = Kernel::Golovin; // Collision kernel
 
-    let n_part: usize = utils::math::pow2(17 as usize) as usize; // Total number of superdroplets
+    let n_part: usize = utils::math::pow2(19 as usize) as usize; // Total number of superdroplets
     let t_end: u32 = 3600; // Total simulation time (seconds)
     let plot_dt: u32 = 600; // Output interval time
     let smooth_window: usize = 9;
@@ -124,6 +127,10 @@ fn main() {
     let mut step: u32 = 0;
 
     println!("\nBEGINNING MAIN SIMULATION LOOP\n");
+    
+    // Start timing the main simulation loop
+    let start_time = Instant::now();
+    
     while stopwatch.total_seconds() <= t_end {
         if PLOT && step % plot_dt == 0 {
             let bin_grid = io::bin_droplets(&droplets);
@@ -166,6 +173,10 @@ fn main() {
         step += 1;
     }
 
+    // End timing
+    let elapsed_time = start_time.elapsed();
+    let elapsed_seconds = elapsed_time.as_secs_f64();
+
     if PLOT {
         if let Some(ref mut writer) = csv_writer {
             writer.flush().unwrap();
@@ -173,10 +184,15 @@ fn main() {
     }
 
     println!("\n\nSimulation completed successfully.");
+    println!("Runtime: {:.6} seconds", elapsed_seconds);
     let final_mass = masses.last().unwrap();
     println!(
         "Remaining water mass: {:5.3e} kg ({:.1}% of initial)",
         final_mass,
         final_mass / wm0 * 100.0
     );
+
+    // Write timing to file
+    let mut time_file = File::create("time.out").expect("Failed to create time.out");
+    writeln!(time_file, "{:.6}", elapsed_seconds).expect("Failed to write to time.out");
 }

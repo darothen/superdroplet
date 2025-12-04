@@ -42,9 +42,8 @@ def sce():
     t_c = 1.0  # Model timestep (seconds)
     kernel = Kernel.GOLOVIN  # Collision kernel
 
-    n_part = 2**17  # Total number of superdroplets
-    # t_end = 3600  # Total simulation time (seconds)
-    t_end = 601
+    n_part = 2**21  # Total number of superdroplets
+    t_end = 3600  # Total simulation time (seconds)
     plot_dt = 600  # Output interval time
     smooth_window = 9  # Smoothing window for the median
 
@@ -111,6 +110,9 @@ def sce():
     step = 0
     print("\nBEGINNING MAIN SIMULATION LOOP\n")
 
+    # Start timing the main simulation loop
+    start_time = time.time()
+
     # Configure progress bar
     main_progress = Progress(
         SpinnerColumn(),
@@ -168,6 +170,21 @@ def sce():
     ## Clean up
     main_progress.stop()
     collision_progress.stop()
+
+    # End timing
+    elapsed_time = time.time() - start_time
+
+    # Print final statistics
+    print("\n\nSimulation completed successfully.")
+    print(f"Runtime: {elapsed_time:.6f} seconds")
+    wm_final = compute_total_water(droplets)
+    print(
+        f"Remaining water mass: {wm_final:.3e} kg ({wm_final / wm_0 * 100.0:.1f}% of initial)"
+    )
+
+    # Write timing to file
+    with open("time.out", "w") as f:
+        f.write(f"{elapsed_time:.6f}\n")
 
 
 if __name__ == "__main__":

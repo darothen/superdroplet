@@ -11,7 +11,7 @@ from sd_numba.core.constants import FOUR_THIRD, PI, RHO_WATER
 
 @jitclass(
     spec=[
-        ("multi", types.int32),
+        ("multi", types.int64),
         ("rcubed", types.float64),
         ("solute", types.float64),
         ("density", types.float64),

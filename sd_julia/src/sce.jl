@@ -33,7 +33,7 @@ function run_simulation(; debug::Bool=false, plot::Bool=true)
     t_c = 1  # Model timestep (seconds)
     kernel = Golovin  # Collision kernel
     
-    n_part = 2^17  # Total number of superdroplets
+    n_part = 2^21 # Total number of superdroplets
     t_end = 3600  # Total simulation time (seconds)
     plot_dt = 600  # Output interval time
     smooth_window = 9  # Smoothing window for the median
@@ -107,6 +107,9 @@ function run_simulation(; debug::Bool=false, plot::Bool=true)
     
     println("BEGINNING MAIN SIMULATION LOOP\n")
     
+    # Start timing the main simulation loop
+    start_time = time()
+    
     # Create progress bar
     prog = Progress(t_end, dt=1.0, desc="Running simulation: ", 
                     barglyphs=BarGlyphs("[=> ]"), barlen=50)
@@ -146,6 +149,9 @@ function run_simulation(; debug::Bool=false, plot::Bool=true)
         increment!(stopwatch, t_c)
     end
     
+    # End timing
+    elapsed_time = time() - start_time
+    
     # Close CSV file
     if plot
         close(csv_io)
@@ -153,9 +159,15 @@ function run_simulation(; debug::Bool=false, plot::Bool=true)
     
     # Final statistics
     println("\n\nSimulation completed successfully.")
+    @printf("Runtime: %.6f seconds\n", elapsed_time)
     wm_final = total_water(droplets)
     @printf("Remaining water mass: %.3e kg (%.1f%% of initial)\n",
             wm_final, wm_final / wm_0 * 100.0)
+    
+    # Write timing to file
+    open("time.out", "w") do f
+        @printf(f, "%.6f\n", elapsed_time)
+    end
     
     return nothing
 end

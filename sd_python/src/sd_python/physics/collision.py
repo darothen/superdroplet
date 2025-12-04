@@ -98,19 +98,17 @@ def collision_step(
     # Cache kernel method reference to avoid repeated attribute lookups
     kernel_compute = kernel.compute
 
-    # Shuffle the droplet list
-    # random.shuffle(droplets)
-    # Optimization: Instead of shuffling the entire droplet list (O(n)),
-    # randomly sample just the indices we need for pairing.
-    # random.sample() selects 2*half_n_part indices without replacement,
-    # which we then pair up: (0,1), (2,3), (4,5), etc.
-    # Maintains statistical equivalence with shuffle+pair approach.
-    sampled_indices = random.sample(range(n_part), 2 * half_n_part)
+    # Shuffle the droplet indices
+    # Generate a random permutation of all indices, then split into two halves
+    # and pair corresponding elements from each half: (0, half_n_part), (1, half_n_part+1), etc.
+    # This follows the Shima et al. (2009) algorithm correctly.
+    sampled_indices = random.sample(range(n_part), n_part)
 
     for pair_idx in range(half_n_part):
-        # Pair up: (0,1), (2,3), (4,5), etc.
-        idx_j = sampled_indices[2 * pair_idx]
-        idx_k = sampled_indices[2 * pair_idx + 1]
+        # Pair up: split into two halves and pair corresponding elements
+        # (0, half_n_part), (1, half_n_part+1), (2, half_n_part+2), etc.
+        idx_j = sampled_indices[pair_idx]
+        idx_k = sampled_indices[pair_idx + half_n_part]
 
         sd_j = droplets[idx_j]
         sd_k = droplets[idx_k]
