@@ -9,7 +9,7 @@ This implementation follows the refined architecture of the reference implementa
 This package uses standard Julia package management with `Project.toml`. To set up:
 
 ```bash
-cd sd_julia-v2
+cd sd_julia
 ```
 
 Then in Julia:

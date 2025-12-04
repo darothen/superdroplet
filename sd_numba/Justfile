@@ -1,6 +1,14 @@
 default:
     @just --list
 
+# Run simulation
+run:
+    uv run sd_numba
+
+# Plot output
+plot:
+    ../plot_output.py collision_output.csv
+
 # Run tests
 test:
     uv run pytest -v

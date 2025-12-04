@@ -26,6 +26,10 @@ clean:
 run: build
     ./build/sd_cpp
 
+# Plot output
+plot:
+    ../plot_output.py collision_output.csv
+
 # Run with debug build
 run-debug: build-debug
     ./build-debug/sd_cpp

@@ -1,6 +1,10 @@
 default:
     @just --list
 
+# Run simulation
+run:
+    uv run sd_python
+
 # Run tests
 test:
     uv run pytest -v

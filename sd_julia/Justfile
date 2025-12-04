@@ -1,0 +1,21 @@
+# Justfile for sd_julia
+
+# Default recipe to display help
+default:
+    @just --list
+
+# Run simulation
+run:
+    julia --project=. -e 'using SuperdropletModel; run_simulation()'
+
+# Plot output
+plot:
+    ../plot_output.py collision_output.csv
+
+# Run test suite
+test:
+    julia --project=. -e 'using Pkg; Pkg.test()'
+
+# Set up project / install dependencies
+setup:
+    julia --project=. -e 'using Pkg; Pkg.instantiate()'

@@ -112,8 +112,8 @@ contains
     !! superdroplet collide with droplets from another. Handles both cases where
     !! droplets remain unpaired or where superdroplets must be split.
     !!
-    !! @param[inout] sd_j - First superdroplet (smaller multiplicity)
-    !! @param[inout] sd_k - Second superdroplet (larger multiplicity)
+    !! @param[inout] sd_j - First superdroplet (larger or equal multiplicity)
+    !! @param[inout] sd_k - Second superdroplet (smaller or equal multiplicity)
     !! @param[in] gamma - Number of collisions to process
     pure subroutine multi_coalesce(sd_j, sd_k, gamma)
         type(droplet_t), intent(inout) :: sd_j, sd_k
@@ -240,8 +240,8 @@ contains
             if ( (prob - floor_prob) > phi ) then
                 gamma = floor_prob + 1.0_dp
 
-                ! Coalesce: pass smaller multiplicity droplet first
-                if (min_xi == droplets(idx_j)%multi) then
+                ! Coalesce: pass larger multiplicity droplet first
+                if (max_xi == droplets(idx_j)%multi) then
                     call multi_coalesce(droplets(idx_j), droplets(idx_k), gamma)
                 else
                     call multi_coalesce(droplets(idx_k), droplets(idx_j), gamma)

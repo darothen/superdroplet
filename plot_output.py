@@ -1,4 +1,5 @@
-#!/usr/bin/env uv run
+#!/usr/bin/env -S uv run --script
+
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
@@ -128,7 +129,7 @@ def plot_output(output_file: Path, model_name: Optional[str] = None) -> None:
     ax.set_xscale("log")
 
     ax.set_ylim(0)
-    ax.set_xlim(0)
+    ax.set_xlim(0.5)
     sns.despine(fig=fig, offset=5)
 
     plt.show()

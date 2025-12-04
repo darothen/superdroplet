@@ -1,0 +1,25 @@
+# Justfile for sd_modern_fortran
+
+# Default recipe to display help
+default:
+    @just --list
+
+# Build the project in release mode
+build:
+    fpm build --flag "-std=f2023" --profile release
+
+# Run the project
+run:
+    fpm run --profile release
+
+# Plot output
+plot:
+    ../plot_output.py collision_output.csv
+
+# Build documentation
+build-docs:
+    uvx ford ford.md
+
+# Clean build artifacts
+clean:
+    fpm clean

@@ -31,7 +31,7 @@ function run_simulation(; debug::Bool=false, plot::Bool=true)
     m_0 = x_0 * RHO_WATER  # Total droplet water mass
     delta_v = 1.0e6  # Total parcel volume
     t_c = 1  # Model timestep (seconds)
-    kernel = Long  # Collision kernel
+    kernel = Golovin  # Collision kernel
     
     n_part = 2^17  # Total number of superdroplets
     t_end = 3600  # Total simulation time (seconds)
